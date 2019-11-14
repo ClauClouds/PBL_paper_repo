@@ -68,13 +68,13 @@ def f_selectingPBLcloudWindow(date):
 # goal: return the index of the element of the input array that in closest to the value provided to the function
 def f_closest(array,value):
     idx = (np.abs(array-value)).argmin()
-    return idx   
+    return idx
 
 
 
 def getNearestIndex(timeRef, timeStamp):
-# this function finds the nearest element of timeRef array to the value timeStamp within the given tolerance 
-# and returns the index of the element found. If non is found within the given tolerance, it returns nan.
+    """this function finds the nearest element of timeRef array to the value timeStamp within the given tolerance 
+    and returns the index of the element found. If non is found within the given tolerance, it returns nan."""
     try:
         index = timeRef.index.get_loc(timeStamp, method='nearest')
     
