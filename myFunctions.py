@@ -1719,8 +1719,24 @@ def f_resamplingMatrixCloudnet(time2change, height2change, matrix2change, timeRe
 
 
 
-def f_calculateAllCloudQuantities(CloudInfo, time, height, LWP, LWC, cloudTimeArray, Hwind, Wwind, \
-                 yy, dd, mm, QiThreshold, QcThreshold, iconLemData, device, verboseFlag, debuggingFlag, pathDebugFig):
+def f_calculateAllCloudQuantities(CloudInfo, \
+                                  time, \
+                                  height, \
+                                  LWP, \
+                                  LWC, \
+                                  cloudTimeArray, \
+                                  Hwind, \
+                                  Wwind, \
+                                  yy, \
+                                  dd, \
+                                  mm, \
+                                  QiThreshold, \
+                                  QcThreshold, \
+                                  iconLemData, \
+                                  device, \
+                                  verboseFlag, \
+                                  debuggingFlag, \
+                                  pathDebugFig):
     # code develop to calculate cloud base, cloud top, cloud fraction, when they are not 
     # previously calculated, for observations and model in the same way. 
     #In addition, it identifies cloud units and counts the amount of clouds detected during
