@@ -85,10 +85,10 @@ def getNearestIndex(timeRef, timeStamp):
     return index
 
 def getIndexList(dataTable, reference):
-#   this function reads the less resolved time array (dataTable) and the time array to be used as reference (reference) 
-#   and the tolerance. then for every value in the reference array, it finds the index of the nearest element of 
-#   dataTable for a fixed tolerance. It provides as output the list of indeces of dataTable corresponding 
-#   to the closest elements of the reference array. 
+    """this function reads the less resolved time array (dataTable) and the time array to be used as reference (reference) 
+    and the tolerance. then for every value in the reference array, it finds the index of the nearest element of 
+    dataTable for a fixed tolerance. It provides as output the list of indeces of dataTable corresponding 
+    to the closest elements of the reference array. """
     #print(len(reference))
     indexList = []
     for value in reference:
