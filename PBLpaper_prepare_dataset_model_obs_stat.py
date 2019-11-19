@@ -86,7 +86,9 @@ modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'Q
 
 
 # ----- define list of days to be processed 
-dayList           = ['20130518']#'20130503','20130504', '20130505','20130506','20130509','20130510',    '20130501','20130502','20130425', '20130424']#, '20130429']#]#,, '20130427',
+dayList           = ['20130510']
+#'20130503','20130504', '20130505','20130506','20130509','20130510',
+#    ,'20130424', '20130425', '20130427','20130429','20130501','20130502', '20130518'
 Ndays             = len(dayList)
 
 # dayListAll = ['20130413','20130414','20130417','20130418','20130419','20130420', \
@@ -502,16 +504,16 @@ for iDay in range(Ndays):
 
     # correction to fluxes in case there are less elements: 
     # we add nans so to make them comparable to observed time series
-    if (len(SHFL_30min) < 48):
-        NumberNans = 48 - len(SHFL_30min)
+    if (len(SHFL_30min) < 49):
+        NumberNans = 49 - len(SHFL_30min)
         outSerieSHFL = np.append(np.asarray(SHFL_30min.values), np.repeat(np.nan, float(NumberNans)))
-        SHFL_30min = pd.Series(outSerieSHFL, index = datetime_30m[:-1])
+        SHFL_30min = pd.Series(outSerieSHFL, index = datetime_30m[:])
         
     
-    if (len(LHFL_30min) < 48):
-        NumberNans = 48 - len(LHFL_30min)
+    if (len(LHFL_30min) < 49):
+        NumberNans = 49 - len(LHFL_30min)
         outSerieLHFL = np.append(np.asarray(LHFL_30min.values), np.repeat(np.nan, float(NumberNans)))
-        LHFL_30min = pd.Series(outSerieLHFL, index = datetime_30m[:-1])
+        LHFL_30min = pd.Series(outSerieLHFL, index = datetime_30m[:])
     
    
     pathLWflux = '/data/data_hatpro/jue/hdcp2/radiation_hdcp2/2013/'
@@ -528,7 +530,11 @@ for iDay in range(Ndays):
     SWobsErr   = SWobsData.variables['rsd_error'][:]
     timeSWObs  = nc4.num2date(SWobsData.variables['time'][:], SWobsData.variables['time'].units) 
 
-
+    print('len of surface fluxes ')
+    print(len(SHFL_30min))
+    print(len(LHFL_30min))
+    
+    
     # resampling obvs to icon resolution
     LWobs_res = f_resamplingfield(LWobs, timeLWObs, ICON_DF)
     SWobs_res = f_resamplingfield(SWobs, timeSWObs, ICON_DF)
