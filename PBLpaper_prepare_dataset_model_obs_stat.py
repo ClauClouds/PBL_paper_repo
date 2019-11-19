@@ -86,7 +86,7 @@ modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'Q
 
 
 # ----- define list of days to be processed 
-dayList           = ['20130518']#'20130501','20130502','20130425', '20130424']#, '20130429']#]#,, '20130427',
+dayList           = ['20130518']#'20130503','20130504', '20130505','20130506','20130509','20130510',    '20130501','20130502','20130425', '20130424']#, '20130429']#]#,, '20130427',
 Ndays             = len(dayList)
 
 # dayListAll = ['20130413','20130414','20130417','20130418','20130419','20130420', \
@@ -499,7 +499,21 @@ for iDay in range(Ndays):
     LW_mod_30min     = LW_DF_mod.resample('30min').mean() 
     datetime_30m     = [datetime.datetime(int(yy),int(mm),int(dd),0,0,0) + \
                         datetime.timedelta(minutes=30*x) for x in range(0, 49)]    
+
+    # correction to fluxes in case there are less elements: 
+    # we add nans so to make them comparable to observed time series
+    if (len(SHFL_30min) < 48):
+        NumberNans = 48 - len(SHFL_30min)
+        outSerieSHFL = np.append(np.asarray(SHFL_30min.values), np.repeat(np.nan, float(NumberNans)))
+        SHFL_30min = pd.Series(outSerieSHFL, index = datetime_30m[:-1])
+        
     
+    if (len(LHFL_30min) < 48):
+        NumberNans = 48 - len(LHFL_30min)
+        outSerieLHFL = np.append(np.asarray(LHFL_30min.values), np.repeat(np.nan, float(NumberNans)))
+        LHFL_30min = pd.Series(outSerieLHFL, index = datetime_30m[:-1])
+    
+   
     pathLWflux = '/data/data_hatpro/jue/hdcp2/radiation_hdcp2/2013/'
     fileLWObs  = 'sups_joy_pyrg00_l1_rlds_v00_'+date+'000000.nc'
     LWobsData  = Dataset(pathLWflux+fileLWObs, mode='r')
