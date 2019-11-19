@@ -53,8 +53,8 @@ def f_selectingPBLcloudWindow(date):
         timeEnd     = datetime.datetime(2013,4,24,23,59,59)
         cbctkeyword = 'minmax'
     if date == '20130518':
-        timeStart   = datetime.datetime(2013,5,6,0,0,0)
-        timeEnd     = datetime.datetime(2013,5,16,0,0,0)
+        timeStart   = datetime.datetime(2013,5,18,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,18,16,0,0)
         cbctkeyword = 'minmax'
     return(timeStart,timeEnd, cbctkeyword)
     
@@ -457,14 +457,16 @@ def f_calculateCloudFractionICON(QI, QC, yy, mm, dd, time, height, QiThreshold, 
             HourInf = datetime.datetime(int(yy), int(mm), int(dd), 0, 0, 0) 
         else:
             HourInf = HourInf + deltaT
-        HourSup                 = HourInf + deltaT
+        HourSup     = HourInf + deltaT
         datetime_out.append(HourInf)
         indInt = indInt + 1
     
-        Qi_sliced_t                   = QI_ICON_DF.loc[(QI_ICON_DF.index < HourSup) * (QI_ICON_DF.index > HourInf),:]
-        Qc_sliced_t                   = QC_ICON_DF.loc[(QC_ICON_DF.index < HourSup) * (QC_ICON_DF.index > HourInf),:]
-        # ---- loop on heights: for each height counting the number of elements larger than the threshold and 
-        # calculating the cloud fraction as the ratio between this number and the number of elements counted in the hour
+        Qi_sliced_t = QI_ICON_DF.loc[(QI_ICON_DF.index < HourSup) * (QI_ICON_DF.index > HourInf),:]
+        Qc_sliced_t = QC_ICON_DF.loc[(QC_ICON_DF.index < HourSup) * (QC_ICON_DF.index > HourInf),:]
+        # ---- loop on heights: for each height counting the number of elements 
+        # larger than the threshold and 
+        # calculating the cloud fraction as the ratio between this number and 
+        # the number of elements counted in the hour
         #print len(DF_qi_hour[DF_qi_hour.iloc[:,0] > QiThreshold])
         #print len(DF_qi_hour.iloc[:,0])
         
