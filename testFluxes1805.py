@@ -114,7 +114,7 @@ datetime_ICON     = nc4.num2date(iconLemData.groups['Temp_data'].variables['date
 
 # resampling ICON lem variables on the same time resolution of the observations (mean half hourly)
 SHFL_DF           = pd.Series(SHFL_iconlem, index=datetime_ICON)
-SHFL_30min        = SHFL_DF.resample('30min', how='mean')
+SHFL_30min        = SHFL_DF.resample('30min').mean()
 #SHFL_30min        = SHFL_DF.resample('30min').nanmean()    
 LHFL_DF           = pd.Series(LHFL_iconlem, index=datetime_ICON)
 LHFL_30min        = LHFL_DF.resample('30min').mean()        
@@ -122,16 +122,16 @@ datetime_30m      = [datetime.datetime(int(yy),int(mm),int(dd),0,0,0) + \
                     datetime.timedelta(minutes=30*x) for x in range(0, 49)]
 
 
-if (len(SHFL_30min) < 48):
-    NumberNans = 48 - len(SHFL_30min)
+if (len(SHFL_30min) < 49):
+    NumberNans = 49 - len(SHFL_30min)
     outSerieSHFL = np.append(np.asarray(SHFL_30min.values), np.repeat(np.nan, float(NumberNans)))
-    SHFL_30min = pd.Series(outSerieSHFL, index = datetime_30m[:-1])
+    SHFL_30min = pd.Series(outSerieSHFL, index = datetime_30m[:])
     
 
-if (len(LHFL_30min) < 48):
-    NumberNans = 48 - len(LHFL_30min)
+if (len(LHFL_30min) < 49):
+    NumberNans = 49 - len(LHFL_30min)
     outSerieLHFL = np.append(np.asarray(LHFL_30min.values), np.repeat(np.nan, float(NumberNans)))
-    LHFL_30min = pd.Series(outSerieLHFL, index = datetime_30m[:-1])
+    LHFL_30min = pd.Series(outSerieLHFL, index = datetime_30m[:])
     
 #%%
 fig, ax = plt.subplots(figsize=(10,4))
@@ -143,6 +143,12 @@ ax.get_xaxis().tick_bottom()
 ax.get_yaxis().tick_left() 
 ax.xaxis_date()
 plt.plot(datetime_ICON, SHFL_iconlem)
-plt.plot(datetime_30m[:-1], SHFL_30min)
+plt.plot(datetime_30m[:], SHFL_30min)
 
 #%%
+path2File = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_patch003/'
+filename = 'dataset_PBLcloudPaper_ModObs_20130502.p'
+
+# opening the file containing all the data
+infile        = open(path2File+filename,'rb')
+new_dict      = pickle.load(infile, encoding='latin1')
