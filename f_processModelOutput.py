@@ -242,6 +242,9 @@ def f_processModelOutput(path_icon, \
     CB_PBL[:]       = np.nan
     CB_PBL[:]       = result[3]
     CT_PBL[:]       = result[4]
+    print(CB_PBL)
+    print(CT_PBL)
+    print('*************************************************')
 # =============================================================================
 #     
 #     for indT in range(len(datetime_ICON)):#
