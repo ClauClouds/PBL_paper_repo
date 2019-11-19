@@ -27,8 +27,8 @@ import matplotlib as mpl
 from myFunctions import f_resamplingfield
 import xlrd
 from matplotlib import pyplot as pl
-
-dateArr = ['20130518']#'20130424', '20130425', '20130427', '20130429','20130501','20130502' ]
+#'20130503','20130504', '20130505','20130506','20130509','20130510',
+dateArr = ['20130503']#'20130424', '20130425', '20130427', '20130429','20130501','20130502' ]
 dateTime_fluxes  = [datetime.datetime(2013,1,1,0,0,0) + datetime.timedelta(minutes=30*x) for x in range(0, 17519)]
 filenameList     = ['RU_EC_001_fluxes_2013.xlsx','ME_EC_001_fluxes_2013.xlsx','SE_EC_001_fluxes_2013.xlsx']
 StringStatArr    = ['RU', 'ME', 'SE']
