@@ -366,7 +366,8 @@ for indFile in range(Nfiles):
      # ------- Analysis of the mean hourly profiles of variance of vertical velocity for obs. ICON-LEM, ICON-INSCAPE
      # ----------------------------------------------------------------------------------------
      #---- calculating mean variance and standard deviation profiles for each hour of the day for obs and model
-     print('calculating mean variance and standard deviation profiles for each hour of the day for obs and models')
+     print('calculating mean variance and standard deviation profiles for each \
+           hour of the day for obs and models')
      varianceWmean_obs = f_calcMeanStdVarProfiles(varianceW_obs, time[:], height[:],\
                                      date, yy, mm, dd, NprofilesOut, timeIncrement) 
      varianceWmean_mod = f_calcMeanStdVarProfiles(varW_mod[:,:], time[:], height[:], \
@@ -422,7 +423,9 @@ plt.grid(b=True, which='major', color='#666666', linestyle=':')
 
 cmap = plt.cm.get_cmap('jet', len(datetime_fluxes)) 
 for indFile in range(Nfiles):
+    print(len(LHSF_mod[indFile]))
     print(indFile)
+    print(len(LHSF_obs[indFile]))
     LHSF_iconlemPlot = LHSF_mod[indFile]
     LHSF_obsPlot = -LHSF_obs[indFile]
     sizeDots = LHSF_err_obs[indFile]
@@ -507,7 +510,7 @@ ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)  
 ax.get_xaxis().tick_bottom()  
 ax.get_yaxis().tick_left() 
-colors = np.arange(0,len(datetime_fluxes))
+colors = np.arange(0,len(LWF_mod[0]))
 plt.plot(data, data, color='black', linestyle=':')
 plt.xlim(225., 400.)
 plt.ylim(225., 400.)
@@ -520,6 +523,13 @@ for indFile in range(Nfiles):
     print(indFile)
     LWF_iconlemPlot = LWF_mod[indFile]
     LWF_obsPlot = LWF_obs[indFile]
+    if len(LWF_iconlemPlot) < 49:
+        NumberNans = 49 - len(LWF_iconlemPlot)
+        LWF_iconlemPlot = np.append(np.asarray(LWF_iconlemPlot), np.repeat(np.nan, float(NumberNans)))
+    if len(LWF_obsPlot) < 49:
+        NumberNans = 49 - len(LWF_obsPlot)
+        LWF_obsPlot = np.append(np.asarray(LWF_obsPlot), np.repeat(np.nan, float(NumberNans)))
+    
     sizeDots = LWF_err_obs[indFile]
     cax = ax.scatter(LWF_obsPlot[:], LWF_iconlemPlot[:], c=colors, cmap=cmap, \
                  s=10*sizeDots)
@@ -539,108 +549,112 @@ plt.tight_layout()
 plt.savefig(pathFig+'LWF_scatterplot_obs_mod_allDays.png', format='png')
 
 #%%
-data = np.arange(-1000, 2000)
-fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
-matplotlib.rcParams['savefig.dpi'] = 100
-plt.gcf().subplots_adjust(bottom=0.15)
-fig.tight_layout()
-ax = plt.subplot(1,1,1)  
-ax.spines["top"].set_visible(False)  
-ax.spines["right"].set_visible(False)  
-ax.get_xaxis().tick_bottom()  
-ax.get_yaxis().tick_left() 
-colors = np.arange(0,len(datetime_fluxes))
-plt.plot(data, data, color='black', linestyle=':')
-plt.xlim(-20., 950.)
-plt.ylim(-150., 50.)
-plt.xlabel('Shortwave downward flux obs [W/m^2]', fontsize=16)
-plt.ylabel('Shortwave downward flux icon lem [W/m^2]', fontsize=16)
-plt.grid(b=True, which='major', color='#666666', linestyle=':')
-
-cmap = plt.cm.get_cmap('jet', len(datetime_fluxes)) 
-for indFile in range(Nfiles):
-    print(indFile)
-    SWF_iconlemPlot = SWF_mod[indFile]
-    SWF_obsPlot = SWF_obs[indFile]
-    sizeDots = SWF_err_obs[indFile]
-    cax = ax.scatter(SWF_obsPlot[:], SWF_iconlemPlot[:], c=colors, cmap=cmap, \
-                 s=10*sizeDots)
-cbar = fig.colorbar(cax, \
-                    cmap=cmap, \
-                    ticks= [0, 8, 16, 24, 32, 40, 47])
-cbar.set_label(label='time [hh:mm]',size=15, family='helvetica')
-cbar.ax.tick_params(labelsize=14)
-cbar.ax.set_yticklabels([str(datetime_fluxes[0])[11:16],\
-                         str(datetime_fluxes[8])[11:16],\
-                         str(datetime_fluxes[16])[11:16],\
-                         str(datetime_fluxes[24])[11:16],\
-                         str(datetime_fluxes[32])[11:16],\
-                         str(datetime_fluxes[40])[11:16],\
-                         str(datetime_fluxes[47])[11:16]], fontsize=14) 
-plt.tight_layout()
-plt.savefig(pathFig+'SWF_scatterplot_obs_mod_allDays.png', format='png')
-
+# =============================================================================
+# data = np.arange(-1000, 2000)
+# fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
+# matplotlib.rcParams['savefig.dpi'] = 100
+# plt.gcf().subplots_adjust(bottom=0.15)
+# fig.tight_layout()
+# ax = plt.subplot(1,1,1)  
+# ax.spines["top"].set_visible(False)  
+# ax.spines["right"].set_visible(False)  
+# ax.get_xaxis().tick_bottom()  
+# ax.get_yaxis().tick_left() 
+# colors = np.arange(0,len(datetime_fluxes))
+# plt.plot(data, data, color='black', linestyle=':')
+# plt.xlim(-20., 950.)
+# plt.ylim(-150., 50.)
+# plt.xlabel('Shortwave downward flux obs [W/m^2]', fontsize=16)
+# plt.ylabel('Shortwave downward flux icon lem [W/m^2]', fontsize=16)
+# plt.grid(b=True, which='major', color='#666666', linestyle=':')
+# 
+# cmap = plt.cm.get_cmap('jet', len(datetime_fluxes)) 
+# for indFile in range(Nfiles):
+#     print(indFile)
+#     SWF_iconlemPlot = SWF_mod[indFile]
+#     SWF_obsPlot = SWF_obs[indFile]
+#     sizeDots = SWF_err_obs[indFile]
+#     cax = ax.scatter(SWF_obsPlot[:], SWF_iconlemPlot[:], c=colors, cmap=cmap, \
+#                  s=10*sizeDots)
+# cbar = fig.colorbar(cax, \
+#                     cmap=cmap, \
+#                     ticks= [0, 8, 16, 24, 32, 40, 47])
+# cbar.set_label(label='time [hh:mm]',size=15, family='helvetica')
+# cbar.ax.tick_params(labelsize=14)
+# cbar.ax.set_yticklabels([str(datetime_fluxes[0])[11:16],\
+#                          str(datetime_fluxes[8])[11:16],\
+#                          str(datetime_fluxes[16])[11:16],\
+#                          str(datetime_fluxes[24])[11:16],\
+#                          str(datetime_fluxes[32])[11:16],\
+#                          str(datetime_fluxes[40])[11:16],\
+#                          str(datetime_fluxes[47])[11:16]], fontsize=14) 
+# plt.tight_layout()
+# plt.savefig(pathFig+'SWF_scatterplot_obs_mod_allDays.png', format='png')
+# 
+# =============================================================================
 
 #%%
-
 # =============================================================================
-# calculating and plotting IWV distributions for each hour of the day
+# 
+# # =============================================================================
+# # calculating and plotting IWV distributions for each hour of the day
+# # =============================================================================
+# IWV_mod_nd = np.stack(IWV_mod).T
+# IWV_obs_nd = np.stack(IWV_obs).T
+# IWV_obs_nd = np.vstack([IWV_obs_nd,np.nan*np.ones(6)]) 
+# hours = [0, 6, 9, 12, 15, 18, 24]
+# 
+# def hour2idx(hour, dtime=9):
+#     return int(hour*3600/dtime)
+# 
+# nbins = 10
+# ymax  = 0.6
+# fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
+# matplotlib.rcParams['savefig.dpi'] = 100
+# plt.gcf().subplots_adjust(bottom=0.15)
+# xmin = 10.
+# xmax=25.
+# indplot = 1
+# for indHour in range(len(hours)-1):
+#     hourInf = hours[indHour]
+#     hourSup = hours[indHour+1]
+#     hinf_idx = hour2idx(hourInf)
+#     hsup_idx = hour2idx(hourSup)
+#     
+#     mod = IWV_mod_nd[hinf_idx:hsup_idx,:]
+#     obs = IWV_obs_nd[hinf_idx:hsup_idx,:]
+#     percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
+#     percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
+#     
+#     #plt.figure()
+#     #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
+#     #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
+#     ax = plt.subplot(2,3,indplot)  
+#     ax.spines["top"].set_visible(False)  
+#     ax.spines["right"].set_visible(False)  
+#     ax.get_xaxis().tick_bottom()  
+#     ax.get_yaxis().tick_left()     
+#     matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+#     matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+#     ax.set_ylabel('norm occurrences')
+#     ax.set_xlabel('IWV [Kg/m^2]')
+#     #ax.ylim(ymax)
+#     plt.ylim(0.,ymax)
+#     plt.xlim(xmin, xmax)
+#     plt.text(19., ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 1)))
+#     plt.text(19., ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 1)))  
+#     plt.grid(b=True, which='major', color='#666666', linestyle=':')
+#     plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], alpha=0.5, label='icon-lem')       
+#     plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], alpha=0.5, label='obs')       
+#     plt.legend(loc='upper left', fontsize=12, frameon=False)
+#     ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
+#     indplot= indplot+1
+# fig.tight_layout()
+# plt.savefig(pathFig+'IWV_distrib_mod_obs_stat_global.png', format='png')    
+# 
 # =============================================================================
-IWV_mod_nd = np.stack(IWV_mod).T
-IWV_obs_nd = np.stack(IWV_obs).T
-IWV_obs_nd = np.vstack([IWV_obs_nd,np.nan*np.ones(6)]) 
-hours = [0, 6, 9, 12, 15, 18, 24]
 
-def hour2idx(hour, dtime=9):
-    return int(hour*3600/dtime)
-
-nbins = 10
-ymax  = 0.6
-fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
-matplotlib.rcParams['savefig.dpi'] = 100
-plt.gcf().subplots_adjust(bottom=0.15)
-xmin = 10.
-xmax=25.
-indplot = 1
-for indHour in range(len(hours)-1):
-    hourInf = hours[indHour]
-    hourSup = hours[indHour+1]
-    hinf_idx = hour2idx(hourInf)
-    hsup_idx = hour2idx(hourSup)
-    
-    mod = IWV_mod_nd[hinf_idx:hsup_idx,:]
-    obs = IWV_obs_nd[hinf_idx:hsup_idx,:]
-    percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
-    percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
-    
-    #plt.figure()
-    #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
-    #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
-    ax = plt.subplot(2,3,indplot)  
-    ax.spines["top"].set_visible(False)  
-    ax.spines["right"].set_visible(False)  
-    ax.get_xaxis().tick_bottom()  
-    ax.get_yaxis().tick_left()     
-    matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
-    matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
-    ax.set_ylabel('norm occurrences')
-    ax.set_xlabel('IWV [Kg/m^2]')
-    #ax.ylim(ymax)
-    plt.ylim(0.,ymax)
-    plt.xlim(xmin, xmax)
-    plt.text(19., ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 1)))
-    plt.text(19., ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 1)))  
-    plt.grid(b=True, which='major', color='#666666', linestyle=':')
-    plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], alpha=0.5, label='icon-lem')       
-    plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], alpha=0.5, label='obs')       
-    plt.legend(loc='upper left', fontsize=12, frameon=False)
-    ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
-    indplot= indplot+1
-fig.tight_layout()
-plt.savefig(pathFig+'IWV_distrib_mod_obs_stat_global.png', format='png')    
-
-
-
+#%%
 
 
 # =============================================================================
