@@ -28,6 +28,18 @@ import matplotlib.dates as mdates
 #@author: cacquist
 #"""
 def f_selectingPBLcloudWindow(date):
+    if date == '20130424':
+        timeStart   = datetime.datetime(2013,4,24,0,0,0)
+        timeEnd     = datetime.datetime(2013,4,24,23,59,59)
+        cbctkeyword = 'minmax'
+    if date == '20130425':
+        timeStart   = datetime.datetime(2013,4,25,0,0,0)
+        timeEnd     = datetime.datetime(2013,4,25,23,0,0)
+        cbctkeyword = 'minmax'
+    if date == '20130427':
+        timeStart   = datetime.datetime(2013,4,27,5,30,0)
+        timeEnd     = datetime.datetime(2013,4,27,16,0,0)
+        cbctkeyword = 'version2'
     if date == '20130429':
         timeStart   = datetime.datetime(2013,4,29,4,0,0)
         timeEnd     = datetime.datetime(2013,4,29,22,0,0)
@@ -40,22 +52,37 @@ def f_selectingPBLcloudWindow(date):
         timeStart   = datetime.datetime(2013,5,2,0,0,0)
         timeEnd     = datetime.datetime(2013,5,2,22,0,0)
         cbctkeyword = 'minmax'
-    if date == '20130427':
-        timeStart   = datetime.datetime(2013,4,27,5,30,0)
-        timeEnd     = datetime.datetime(2013,4,27,16,0,0)
-        cbctkeyword = 'version2'
-    if date == '20130425':
-        timeStart   = datetime.datetime(2013,4,25,0,0,0)
-        timeEnd     = datetime.datetime(2013,4,25,23,0,0)
+    if date == '20130503':
+        timeStart   = datetime.datetime(2013,5,3,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,3,18,0,0)
         cbctkeyword = 'minmax'
-    if date == '20130424':
-        timeStart   = datetime.datetime(2013,4,24,0,0,0)
-        timeEnd     = datetime.datetime(2013,4,24,23,59,59)
+    if date == '20130504':
+        timeStart   = datetime.datetime(2013,5,4,0,0,0)
+        timeEnd     = datetime.datetime(2013,5,4,23,59,59)
+        cbctkeyword = 'minmax'
+    if date == '20130505':
+        timeStart   = datetime.datetime(2013,5,5,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,5,23,59,59)
+        cbctkeyword = 'minmax'
+    if date == '20130506':
+        timeStart   = datetime.datetime(2013,5,6,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,6,23,59,59)
+        cbctkeyword = 'minmax'
+    if date == '20130509':
+        timeStart   = datetime.datetime(2013,5,9,2,0,0)
+        timeEnd     = datetime.datetime(2013,5,9,23,59,59)
+        cbctkeyword = 'minmax'
+    if date == '20130510':
+        timeStart   = datetime.datetime(2013,5,10,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,10,23,59,59)
         cbctkeyword = 'minmax'
     if date == '20130518':
         timeStart   = datetime.datetime(2013,5,18,6,0,0)
         timeEnd     = datetime.datetime(2013,5,18,16,0,0)
         cbctkeyword = 'minmax'
+    
+        
+#,'20130504', '20130505','20130506','20130509','20130510'
     return(timeStart,timeEnd, cbctkeyword)
     
     
