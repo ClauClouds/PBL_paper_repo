@@ -113,44 +113,8 @@ def f_processModelOutput(path_icon, \
     if debuggingFlag == 1:
         if verboseFlag == 1: 
             print('no plots')
-# =============================================================================
-#             print('plotting graphs for debugging in debugging mode')         
-#         fig, ax = plt.subplots(figsize=(14,6))
-#         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-#         ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
-#         ax.xaxis_date()
-#         cax = ax.pcolormesh(datetime_ICON, height2, merWind.transpose(), vmin=-4., vmax=4.)
-#         ax.set_ylim(107.,2000.)                                               # limits of the y-axesn  cmap=plt.cm.get_cmap("viridis", 256)
-#         ax.set_xlim()                                 # limits of the x-axes
-#         ax.set_title("meridional Wind ICON", fontsize=16)#
-#         ax.set_xlabel("time [hh:mm]", fontsize=16)
-#         ax.set_ylabel("height [m]", fontsize=16)
-#         cbar = fig.colorbar(cax, orientation='vertical')
-#         cbar.set_label(label="wind shear",size=16)
-#         cbar.ax.tick_params(labelsize=14)
-#         cbar.aspect=80
-#         plt.savefig(pathDebugFig+'meridionalWind_iconlem_'+date+'.png', format='png')
-# 
-# =============================================================================
-    
-# =============================================================================
-#         fig, ax = plt.subplots(figsize=(14,6))
-#         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-#         ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
-#         ax.xaxis_date()
-#         cax = ax.pcolormesh(datetime_ICON, height, zonalWind.transpose(), vmin=-8., vmax=20.)
-#         ax.set_ylim(107.,2000.)    # limits of the y-axesn  cmap=plt.cm.get_cmap("viridis", 256)
-#         ax.set_xlim()                                 # limits of the x-axes
-#         ax.set_title("zonal Wind ICON", fontsize=16)
-#         ax.set_xlabel("time [hh:mm]", fontsize=16)
-#         ax.set_ylabel("height [m]", fontsize=16)
-#         cbar = fig.colorbar(cax, orientation='vertical')
-#         cbar.set_label(label="wind shear",size=16)
-#         cbar.ax.tick_params(labelsize=14)
-#         cbar.aspect=80
-#         plt.savefig(pathDebugFig+'zonalWind_iconlem_'+date+'.png', format='png')
-#         
-# =============================================================================
+
+
     
 # =============================================================================
 #         fig, ax = plt.subplots(figsize=(14,6))
