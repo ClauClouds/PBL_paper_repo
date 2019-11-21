@@ -86,8 +86,8 @@ modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'Q
 
 
 # ----- define list of days to be processed 
-dayList           = ['20130510']
-#'20130503','20130504', '20130505','20130506','20130509','20130510',
+dayList           = ['20130503','20130504', '20130505','20130506']
+#,'20130509','20130510',
 #    ,'20130424', '20130425', '20130427','20130429','20130501','20130502', '20130518'
 Ndays             = len(dayList)
 
