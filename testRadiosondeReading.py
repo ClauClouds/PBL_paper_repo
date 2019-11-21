@@ -111,12 +111,7 @@ def f_processRadiosondesDay(fileList, yy, mm, dd):
         Td_surf            = Td[0]
         P_surf             = float(P[0])
         T_surf             = float(T[0])
-        print(P_surf)
-        print(T_surf)
-        print(type(P_surf))
-        print(type(T_surf))
-        print(type(P))
-        print(type(RH))
+
         M0                 = epsilon*e0*np.exp((1./Rv)*(T0**(-1.)-Td_surf**(-1.))) / \
         (P_surf - e0*np.exp((1./Rv)*(T0**(-1.)-Td_surf**(-1.))))
     
@@ -151,6 +146,7 @@ def f_processRadiosondesDay(fileList, yy, mm, dd):
         z_lcl              = lcl(np.array(P_surf*100),np.array(T_surf),np.array(RH[0])/100.)
     
     
+
         # ------------------------------------------------------------------
         # calculate LTS index for lower tropospheric stability (Wood and Bretherton, 2006)
         # ------------------------------------------------------------------
@@ -199,7 +195,7 @@ def f_processRadiosondesDay(fileList, yy, mm, dd):
     
         Ws_array = np.asarray(ws)
         T_array = np.asarray(T)
-        gamma_moist_atmos  = atmos.equations.Gammam_from_rvs_T(Ws_array.astype(float), T_array.astype(float))
+        gamma_moist_atmos  = atmos.equations.Gammam_from_rvs_T(Ws_array.astype(float), T_array.astype(float)) # in [k/m]
         indP700 = f_closest(P*100.,Pthr)
         gamma_moist_700 = gamma_moist[indP700]
         z_700 = height[indP700]
@@ -208,10 +204,31 @@ def f_processRadiosondesDay(fileList, yy, mm, dd):
         #for ind in range(len(height)):
         #    print((height[ind]))
         #print(f_closest(height, float(z_lcl)))
-        
+          
         ind_lcl = f_closest(height, float(z_lcl))
         gamma_lcl = gamma_moist[ind_lcl]
-    
+        
+        LFC = np.nan
+        T_LFC = np.nan
+# =============================================================================
+#         # calculating Level of free convection from LCL
+#         if (z_lcl > 0):
+# 
+#             for indloop in range(len(height)-ind_lcl):
+#                 indHeight = indloop + ind_lcl
+#                 print(gamma_lcl[indHeight]*height[indHeight])
+#                 print(T[indHeight])
+#                 if gamma_lcl[indHeight]*height[indHeight] < T[indHeight]:
+#                     print('LCL')
+#                     print(z_lcl)
+#                     print('height found')
+#                     print(height[indHeight])
+#                     print(indHeight)
+#                     print(ind_lcl)
+#                     LFC = height[indHeight]
+#                     T_LFC = T[indHeight]
+#             
+# =============================================================================
         # finding height corresponding to 700 HPa
         EIS = LTS - gamma_moist_700*z_700 + gamma_lcl*float(z_lcl)
         EIS_atmos = LTS - gamma_moist_atmos[indP700]*z_700 + gamma_moist_atmos[ind_lcl]*float(z_lcl)
@@ -321,3 +338,5 @@ print(fileList)
 if os.listdir(pathIn):    
     # folder full, process radiosondes that are in
     radiosondeList = f_processRadiosondesDay(fileList, yy, mm, dd)
+    
+
