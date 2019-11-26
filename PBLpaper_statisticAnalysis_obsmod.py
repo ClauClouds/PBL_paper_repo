@@ -469,7 +469,6 @@ plt.ylabel('Sensible heat surface flux icon lem [W/m^2]', fontsize=16)
 plt.grid(b=True, which='major', color='#666666', linestyle=':')
 
 
-
 cmap = plt.cm.get_cmap('jet', len(datetime_fluxes)) 
 for indFile in range(Nfiles):
     print(indFile)
@@ -494,6 +493,71 @@ plt.tight_layout()
 plt.savefig(pathFig+'SHSF_scatterplot_obs_mod_allDays.png', format='png')
 #%%
 
+
+datetime_fluxes = datetime_30m[0][:-1]
+data = np.arange(-1000, 2000)
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
+matplotlib.rcParams['savefig.dpi'] = 100
+plt.gcf().subplots_adjust(bottom=0.15)
+fig.tight_layout()
+ax = plt.subplot(1,1,1)  
+ax.spines["top"].set_visible(False)  
+ax.spines["right"].set_visible(False)  
+ax.get_xaxis().tick_bottom()  
+ax.get_yaxis().tick_left() 
+colors = np.arange(0,len(datetime_fluxes))
+plt.plot(data, data, color='black', linestyle=':')
+plt.xlim(-5., 5.)
+plt.ylim(-50., 50.)
+plt.xlabel('Evaporative fraction obs [W/m^2]', fontsize=16)
+plt.ylabel('Evaporative fraction icon lem [W/m^2]', fontsize=16)
+plt.grid(b=True, which='major', color='#666666', linestyle=':')
+
+
+# calculating evaporative fraction as ratio of latent/(sens+latent heat)
+EvapFraction_iconlem = []
+EvapFraction_obs = []
+
+for indFile in range(Nfiles):
+    print(indFile)
+    SHSF_iconlemPlot = -SHSF_mod[indFile]
+    SHSF_obsPlot = SHSF_obs[indFile]
+    LHSF_iconlemPlot = LHSF_mod[indFile]
+    LHSF_obsPlot = -LHSF_obs[indFile]
+    sizeDots = 5#SHSF_err_obs[indFile]
+    EvapFractionDay_iconlem = np.zeros((len(SHSF_iconlemPlot)))
+    EvapFractionDay_iconlem.fill(np.nan)
+    EvapFractionDay_obs = np.zeros((len(SHSF_obsPlot)))
+    EvapFractionDay_obs.fill(np.nan)
+    for ind in range(len(SHSF_iconlemPlot)):
+        EvapFractionDay_iconlem[ind] = LHSF_iconlemPlot[ind]/(LHSF_iconlemPlot[ind]+SHSF_iconlemPlot[ind])
+    for ind in range(len(SHSF_obsPlot)):        
+        EvapFractionDay_obs[ind] = LHSF_obsPlot[ind]/(LHSF_obsPlot[ind]+SHSF_obsPlot[ind])
+    EvapFraction_iconlem.append(EvapFractionDay_iconlem)
+    EvapFraction_obs.append(EvapFractionDay_obs)
+    
+cmap = plt.cm.get_cmap('jet', len(datetime_fluxes)) 
+for indFile in range(Nfiles):
+    EvapFractionPlot_iconlem = EvapFraction_iconlem[indFile]
+    EvapFractionPlot_obs =EvapFraction_obs[indFile]
+    
+    cax = ax.scatter(EvapFractionPlot_obs[:], EvapFractionPlot_iconlem[:-1], c=colors, cmap=cmap, \
+                 s=10*sizeDots)
+cbar = fig.colorbar(cax, \
+                    cmap=cmap, \
+                    ticks= [0, 8, 16, 24, 32, 40, 47])
+cbar.set_label(label='time [hh:mm]',size=15, family='helvetica')
+cbar.ax.tick_params(labelsize=14)
+cbar.ax.set_yticklabels([str(datetime_fluxes[0])[11:16],\
+                         str(datetime_fluxes[8])[11:16],\
+                         str(datetime_fluxes[16])[11:16],\
+                         str(datetime_fluxes[24])[11:16],\
+                         str(datetime_fluxes[32])[11:16],\
+                         str(datetime_fluxes[40])[11:16],\
+                         str(datetime_fluxes[47])[11:16]], fontsize=14) 
+plt.tight_layout()
+plt.savefig(pathFig+'EvapFraction_scatterplot_obs_mod_allDays.png', format='png')
+#%%
 # =============================================================================
 # plotting scatter plots of longwave ans shortwave radiative fluxes for every half hour 
 # =============================================================================
