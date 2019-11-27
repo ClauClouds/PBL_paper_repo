@@ -28,10 +28,19 @@ import matplotlib.dates as mdates
 #@author: cacquist
 #"""
 def f_selectingPBLcloudWindow(date):
+""" function to select time intervals for processing cloud data in each day.
+Also, we pick which algorithm to use with each type of data.
+in particular:
+    - minmax correspond to select as cloud top the max of the cloud tops found. 
+    Clouds above 5000 mt are filtered out (done with the function 
+    f_calcCloudBaseTopPBLclouds)
+    - version2: selects boundary layer clouds with cloud base below 2500 mt and cloud tops below 
+    CB+600mt.
+"""
     if date == '20130424':
         timeStart   = datetime.datetime(2013,4,24,0,0,0)
         timeEnd     = datetime.datetime(2013,4,24,23,59,59)
-        cbctkeyword = 'minmax'
+        cbctkeyword = 'version2'
     if date == '20130425':
         timeStart   = datetime.datetime(2013,4,25,0,0,0)
         timeEnd     = datetime.datetime(2013,4,25,23,0,0)
@@ -55,7 +64,7 @@ def f_selectingPBLcloudWindow(date):
     if date == '20130503':
         timeStart   = datetime.datetime(2013,5,3,6,0,0)
         timeEnd     = datetime.datetime(2013,5,3,18,0,0)
-        cbctkeyword = 'minmax'
+        cbctkeyword = 'version2'
     if date == '20130504':
         timeStart   = datetime.datetime(2013,5,4,0,0,0)
         timeEnd     = datetime.datetime(2013,5,4,23,59,59)
@@ -67,9 +76,9 @@ def f_selectingPBLcloudWindow(date):
     if date == '20130506':
         timeStart   = datetime.datetime(2013,5,6,6,0,0)
         timeEnd     = datetime.datetime(2013,5,6,23,59,59)
-        cbctkeyword = 'minmax'
+        cbctkeyword = 'version2'
     if date == '20130509':
-        timeStart   = datetime.datetime(2013,5,9,2,0,0)
+        timeStart   = datetime.datetime(2013,5,9,6,0,0)
         timeEnd     = datetime.datetime(2013,5,9,23,59,59)
         cbctkeyword = 'minmax'
     if date == '20130510':
@@ -350,6 +359,38 @@ def f_calcCloudBaseTopPBLclouds(cloudMask, dimTime, dimHeight, height, cloudTime
 
 def f_calcCloudBaseTopPBLcloudsV2(cloudMask, dimTime, dimHeight, height, cloudTimeArray, \
                                   time):
+    """
+    @ author: cacquist
+    @  date : 10 November 2019
+    @  goal : this function corresponds to the version2 processing mode. It has been 
+    generated to detect PBL clouds over JOYCE and it has been tuned with 
+    statistical observed mean PBL cloud properties from the site. 
+    INPUT:
+        - cloudMask     : matrix of 0/1 containing cloud mask
+        - dimTime       : dimension of time array
+        - dimHeight     : dimension of height array
+        - cloudTimeArry : 
+        - time          : time array 
+    OUTPUTS:
+        - CBarray       : array containing all cloud bases found with the gradient method
+        - CTarray       : array containing all cloud tops found with the gradient method
+        - NlayersArray  : number fo cloud base/top found for each time
+        - CB_PBL_out    : array of boundary layer cloud bases found 
+        - CT_PBL_out    : array of boundary layer cloud tops found
+        - CB_collective : array of minimum cloud base found
+        - CT_collective : array of maximum cloud top found
+    Methodology:
+    It sets the cloud base to be below 2500mt and the cloud geometrical thickness
+    to be 600 mt. 
+    Check for cloud base height to be below 2500 mt:
+        If cloud base does not fullfill the condition, no PBL cloud 
+            base and top are found and it returns nans.
+        If cloud base fullfills the condition, then it checks for cloud tops.
+        If maximum cloud top is found above the CB + 600 mt, lower cloud
+            tops are searched among the cloud tops below that height and the 
+            minimum is taken.
+        If none are found cloud top nd cloud base are assigned to nan.
+    """
     meanCloudThickness = 600.
     minCBheight = 2500.
     # cloud mask for identifying cloud base and cloud top of PBL clouds
@@ -2522,13 +2563,14 @@ def f_reshapeRadiosondes(new_dict):
 
 # function to calculate mean theta_v from the model around the hours of the radiosondes and averaging 
 # =============================================================================
-# the function goes through the number of days of the dataset. For each day, it counts the number of 
-# radiosonde launched and reads each of them. For each hour corresponding to a radiosonde of the day, 
-# it calculates the mean quantities of the model around that hour (+-1 hour)
-# it then returns for every hour, a dictionary in which radiosonde data and 
-# the corresponding mean model quantities are stored togehter. Every dictionary associated to a given hour is
-# appended to a list which is piling all hours together, independently of the day. 
-# each element of the list is a dictionary of an hour 
+"""the function goes through the number of days of the dataset. For each day, it counts the number of 
+radiosonde launched and reads each of them. For each hour corresponding to a radiosonde of the day, 
+it calculates the mean quantities of the model around that hour (+-1 hour)
+it then returns for every hour, a dictionary in which radiosonde data and 
+the corresponding mean model quantities are stored togehter. 
+Every dictionary associated to a given hour is appended to a list which is 
+piling all hours together, independently of the day. 
+each element of the list is a dictionary of an hour """
 def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
                                        theta_v_radiosondes,\
                                        height_radiosondes, \
@@ -2546,7 +2588,8 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
     # and for every dat there is a different number of radiosonde launched.
     Ndays = len(time_radiosondes)
     
-    # loop on the number of days: for each day there is a different number of radiosondes launched (NdarDay)
+    # loop on the number of days: for each day there is a different number of 
+    # radiosondes launched (NdarDay)
     for indDay in range(Ndays):
         
         # finding the hour of each radiosonde launched
@@ -2554,29 +2597,30 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
         
         # loop on the number of radiosonde of the day
         for indRadDay in range(NradDay):
-            print(indRadDay)
+            #print(indRadDay)
             
             # reading the data of the selected radiosonde of the day
             radioSondeSelected = time_radiosondes[indDay][indRadDay]
-            lcl_rad = lcl_radiosondes[indDay][indRadDay]
-            lts_rad = lts_radiosondes[indDay][indRadDay]
-            pblHeight_rad = pblHeight_radiosondes[indDay][indRadDay]
-            theta_v_rad = theta_v_radiosondes[indDay][:,indRadDay]
-            height_rad = height_radiosondes[indDay][:,indRadDay]
-            theta_v_day = theta_v_mod[indDay][:,:]
-            time_day = time_mod[indDay][:]
-            lcl_mod_day = lcl_mod[indDay][:]
-            lts_mod_day = lts_mod[indDay][:]
-            pblHeight_mod_day = pblHeight_mod[indDay][:]            
+            lcl_rad            = lcl_radiosondes[indDay][indRadDay]
+            lts_rad            = lts_radiosondes[indDay][indRadDay]
+            pblHeight_rad      = pblHeight_radiosondes[indDay][indRadDay]
+            theta_v_rad        = theta_v_radiosondes[indDay][:,indRadDay]
+            height_rad         = height_radiosondes[indDay][:,indRadDay]
+            theta_v_day        = theta_v_mod[indDay][:,:]
+            time_day           = time_mod[indDay][:]
+            lcl_mod_day        = lcl_mod[indDay][:]
+            lts_mod_day        = lts_mod[indDay][:]
+            pblHeight_mod_day  = pblHeight_mod[indDay][:]
             #lts_mod_day = lts_mod[:]
 
+            # reading exact hour of the radiosounding
             hh = radioSondeSelected.hour
-            mm = radioSondeSelected.minute
             dd = radioSondeSelected.day
             yy = radioSondeSelected.year
             MM = radioSondeSelected.month
             
-            # defining the time interval around the hour to consider for calculating the average of the model
+            # defining the time interval around the hour to consider
+            # for calculating the average of the model
             if hh == 23:
                 hourInf = datetime.datetime(yy,MM,dd,hh-2)
                 hourSup = datetime.datetime(yy,MM,dd,hh)
@@ -2586,15 +2630,19 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
             if (hh!= 23) * (hh!= 0):            
                 hourInf = datetime.datetime(yy,MM,dd,hh-1)
                 hourSup = datetime.datetime(yy,MM,dd,hh+1)
-            print(hh)
+            #print(hh)
             
-            # calculate now mean profile of the theta_v from the model output corresponding to the selected time interval
-            thetaV_DF = pd.DataFrame(theta_v_day, index=time_day, columns=height_mod)
-            lcl_mod_DF       = pd.DataFrame(lcl_mod_day, index=time_day)
-            lts_mod_DF       = pd.DataFrame(lts_mod_day, index=time_day)
-            pblHeight_mod_DF = pd.DataFrame(pblHeight_mod_day, index=time_day)
+            # calculate now mean profile of the theta_v from the model output 
+            # corresponding to the selected time interval
             
-            field_sliced_t = thetaV_DF.loc[(thetaV_DF.index < hourSup) * (thetaV_DF.index >= hourInf),:]
+            # defining pandas dataframes 
+            thetaV_DF            = pd.DataFrame(theta_v_day, index=time_day, columns=height_mod)
+            lcl_mod_DF           = pd.DataFrame(lcl_mod_day, index=time_day)
+            lts_mod_DF           = pd.DataFrame(lts_mod_day, index=time_day)
+            pblHeight_mod_DF     = pd.DataFrame(pblHeight_mod_day, index=time_day)
+            
+            # selecting the theta_v profiles in the time interval corresponding to the hour
+            field_sliced_t       = thetaV_DF.loc[(thetaV_DF.index < hourSup) * (thetaV_DF.index >= hourInf),:]
             theta_v_mod_mean     = field_sliced_t.mean(axis=0, skipna=True)
             theta_v_mod_std      = field_sliced_t.std(axis=0, skipna=True)
             
@@ -2628,77 +2676,77 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
             theta_v_dict_obs_mod_arr.append(dict_theta)
     return(theta_v_dict_obs_mod_arr)
     
-# function to derive mean profiles for each hour at which radiosondes were launched
-# The first step is to sort the elements of the list of dictionaries 
-# (each dictionary correspond to one radiosonde launched at a given hour) based 
-# on the hour, so that we collect consequently same hours belonging to different days
-# 
+
 def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, height_mod):
+    """function to derive mean profiles for each hour at which radiosondes were launched
+    the first step is to sort the elements of the list of dictionaries 
+    (each dictionary correspond to one radiosonde launched at a given hour) based 
+    on the hour, so that we collect consequently same hours belonging to different days
+    """
     import operator
     from collections import Counter
     
     # sorting dictionary based on hours: 
     theta_v_dict_obs_mod_arr.sort(key=operator.itemgetter('hour')) #list of dictionaries ordered per hour
-    # counting how many profiles for each hour are present (on different days)
     
+    # counting how many profiles for each hour are present (on different days)
     k            = [i['hour'] for i in theta_v_dict_obs_mod_arr]
     m            = Counter(k)
     k0           = 0
-    count        = 0
-    totProfiles  = 0
     listHourDict = []
     hourPrec     = 0
+    # loop on hours found
     for ind in range(len(k)):
         hourSel = k[ind]
+        # if not the first hour of the loop 
         if hourSel != hourPrec:
-            hourPrec = hourSel
-            print('hoursel', hourSel)
+            hourPrec          = hourSel
+            #print('hoursel', hourSel)
             
             # counting how many profiles for each hour are present
-            Nprofiles = m[hourSel]
-            print('Nprofiles', Nprofiles)
-            print('k0', k0)
+            Nprofiles         = m[hourSel]
+            #print('Nprofiles', Nprofiles)
+            #print('k0', k0)
             
             lenghtProf_radios = []
-            lenghtProf_mod = []
+            lenghtProf_mod    = []
+            
             # loop on the number of "same" hours present to find out the 
-            # lengths of the radiosonde profiles and of the modelled ones.
+            # lengths of the radiosonde profiles and of the modelled ones. 
+            # Lengths are stored in length_mod and length_obs arrays
             for iloop in range(k0, k0+Nprofiles):
-                print('iloop', iloop)
-                
+                #print('iloop', iloop)
                 lenghtProf_radios.append(len(theta_v_dict_obs_mod_arr[iloop]['theta_v_radios']))
                 lenghtProf_mod.append(len(theta_v_dict_obs_mod_arr[iloop]['theta_v_mod_mean']))
                 
-            print('lenght of the profiles', lenghtProf_radios)
-            print('max lenght', np.max(lenghtProf_radios))
+            #print('lenght of the profiles', lenghtProf_radios)
+            #print('max lenght', np.max(lenghtProf_radios))
             
             # defining matrices where to store all profiles collected for the hour on which the loop is running
             # and the matrices where to calculate the mean profiles for the model data corresponding to the 
             # given hour. All matrices are filled with nans
-            MatrixProfiles_radios = np.zeros((np.max(lenghtProf_radios), Nprofiles))
-            MatrixProfiles_radios[MatrixProfiles_radios == 0] = np.nan 
-            MatrixProfiles_mod = np.zeros((np.max(lenghtProf_mod), Nprofiles))
-            MatrixProfiles_mod[MatrixProfiles_mod == 0] = np.nan         
-            MatrixHeight_radios = np.zeros((np.max(lenghtProf_radios), Nprofiles))
-            MatrixHeight_radios[MatrixHeight_radios == 0] = np.nan  
-            arr_lcl_hour_radios = np.zeros(Nprofiles)
-            arr_lts_hour_radios = np.zeros(Nprofiles)
+            MatrixProfiles_radios     = np.zeros((np.max(lenghtProf_radios), Nprofiles))
+            MatrixProfiles_mod        = np.zeros((np.max(lenghtProf_mod), Nprofiles))
+            MatrixHeight_radios       = np.zeros((np.max(lenghtProf_radios), Nprofiles))
+            arr_lcl_hour_radios       = np.zeros(Nprofiles)
+            arr_lts_hour_radios       = np.zeros(Nprofiles)
             arr_pblHeight_hour_radios = np.zeros(Nprofiles)
-            #arr_lts_mod = np.zeros(Nprofiles)
-            arr_lcl_hour_radios[arr_lcl_hour_radios == 0] = np.nan
-            arr_lts_hour_radios[arr_lts_hour_radios == 0] = np.nan
-            arr_pblHeight_hour_radios[arr_pblHeight_hour_radios == 0] = np.nan
-
-            arr_lcl_hour_mod = np.zeros(Nprofiles)
-            arr_lts_hour_mod = np.zeros(Nprofiles)
-            arr_pblHeight_mod = np.zeros(Nprofiles)
-            arr_lcl_hour_mod[arr_lcl_hour_mod == 0] = np.nan
-            arr_lts_hour_mod[arr_lts_hour_mod == 0] = np.nan
-            arr_pblHeight_mod[arr_pblHeight_mod == 0] = np.nan
+            arr_lcl_hour_mod          = np.zeros(Nprofiles)
+            arr_lts_hour_mod          = np.zeros(Nprofiles)
+            arr_pblHeight_mod         = np.zeros(Nprofiles)
+            MatrixProfiles_radios.fill(np.nan) 
+            MatrixProfiles_mod.fill(np.nan)
+            MatrixHeight_radios.fill(np.nan)
+            arr_lcl_hour_radios.fill(np.nan)
+            arr_lts_hour_radios.fill(np.nan)
+            arr_pblHeight_hour_radios.fill(np.nan)
+            arr_lcl_hour_mod.fill(np.nan)
+            arr_lts_hour_mod.fill(np.nan)
+            arr_pblHeight_mod.fill(np.nan)
             
             # loop on the number of profiles for the given hour to fill the data in the matrices
             for iloop in range(Nprofiles):
-                print('calculating mean for hour', hourSel)
+                #print('calculating mean for hour', hourSel)
                 #print(iloop+k0)
                 
                 # filling mean profiles from the model (mean calculated around that hour)
@@ -2711,64 +2759,67 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
                 MatrixHeight_radios[0:len(theta_v_dict_obs_mod_arr[iloop+k0]['height_rad']),iloop]\
                 = theta_v_dict_obs_mod_arr[iloop+k0]['height_rad'] 
                 
-                # filling values of lcl, ccl from all radiosondes of the same hour from different days
-                arr_lcl_hour_radios[iloop] = theta_v_dict_obs_mod_arr[iloop+k0]['lcl_rad']
-                arr_lts_hour_radios[iloop] = theta_v_dict_obs_mod_arr[iloop+k0]['lts_rad']
+                # filling values of lcl, lts and pbl from all radiosondes of the same hour from different days
+                arr_lcl_hour_radios[iloop]       = theta_v_dict_obs_mod_arr[iloop+k0]['lcl_rad']
+                arr_lts_hour_radios[iloop]       = theta_v_dict_obs_mod_arr[iloop+k0]['lts_rad']
                 arr_pblHeight_hour_radios[iloop] = theta_v_dict_obs_mod_arr[iloop+k0]['pblHeight_rad']
                 
-                # filling valued of lcl, ccl from model mean already calculated
-                arr_lcl_hour_mod[iloop] = theta_v_dict_obs_mod_arr[iloop+k0]['lcl_mod_mean']
-                arr_lts_hour_mod[iloop] = theta_v_dict_obs_mod_arr[iloop+k0]['lts_mod_mean']
-                arr_pblHeight_mod[iloop] = theta_v_dict_obs_mod_arr[iloop+k0]['pblHeight_mod_mean']
-                print('ccl obs', arr_lts_hour_radios)
-                print('ccl mod', arr_lts_hour_mod)
-            k0=k0+Nprofiles
+                # filling valued of lcl,lts and pbl from model mean already calculated
+                arr_lcl_hour_mod[iloop]          = theta_v_dict_obs_mod_arr[iloop+k0]['lcl_mod_mean']
+                arr_lts_hour_mod[iloop]          = theta_v_dict_obs_mod_arr[iloop+k0]['lts_mod_mean']
+                arr_pblHeight_mod[iloop]         = theta_v_dict_obs_mod_arr[iloop+k0]['pblHeight_mod_mean']
+                print('lts obs', arr_lts_hour_radios)
+                print('lts mod', arr_lts_hour_mod)
+            # incrementing Ko of the number of profiles of the given hour to be ready to process the next hour
+            k0 = k0+Nprofiles
         
             
             meanProfile_mod = np.nanmean(MatrixProfiles_mod, axis=1)
-            stdProfile_mod = np.nanstd(MatrixProfiles_mod, axis=1)        
-            outDict = {'hour':hourSel, \
-                       'Nprofiles':Nprofiles, \
-                       'MatrixProfile_radios':MatrixProfiles_radios, \
-                       'MatrixHeight_radios':MatrixHeight_radios, \
-                       'meanProfile_mod':meanProfile_mod, \
-                       'stdProfileMod':stdProfile_mod, \
-                       'lcl_rad_hour':arr_lcl_hour_radios, \
-                       'lcl_mod_hour':arr_lcl_hour_mod, \
-                       'lts_rad_hour':arr_lts_hour_radios, \
-                       'lts_mod_hour':arr_lts_hour_mod, \
-                       'pblHeight_rad_hour':arr_pblHeight_hour_radios, \
-                       'pblHeight_mod_hour':arr_pblHeight_mod, \
-                       'n_lts_hour':len(arr_lts_hour_mod), \
-                       'n_lts_hour_obs':len(arr_lts_hour_radios), \
-                       'n_lcl_hour':len(arr_lcl_hour_mod), \
-                       'n_lcl_hour_obs':len(arr_lcl_hour_radios)}
+            stdProfile_mod  = np.nanstd(MatrixProfiles_mod, axis=1)        
+            outDict         = {'hour':hourSel, \
+                               'Nprofiles':Nprofiles, \
+                               'MatrixProfile_radios':MatrixProfiles_radios, \
+                               'MatrixHeight_radios':MatrixHeight_radios, \
+                               'meanProfile_mod':meanProfile_mod, \
+                               'stdProfileMod':stdProfile_mod, \
+                               'lcl_rad_hour':arr_lcl_hour_radios, \
+                               'lcl_mod_hour':arr_lcl_hour_mod, \
+                               'lts_rad_hour':arr_lts_hour_radios, \
+                               'lts_mod_hour':arr_lts_hour_mod, \
+                               'pblHeight_rad_hour':arr_pblHeight_hour_radios, \
+                               'pblHeight_mod_hour':arr_pblHeight_mod, \
+                               'n_lts_hour':len(arr_lts_hour_mod), \
+                               'n_lts_hour_obs':len(arr_lts_hour_radios), \
+                               'n_lcl_hour':len(arr_lcl_hour_mod), \
+                               'n_lcl_hour_obs':len(arr_lcl_hour_radios)}
             
             listHourDict.append(outDict) 
             # list of dictionaries: each dictionary contains a matrix with profiles of theta and height for that hour
             
-    ## interpolating profiles from radiosounding on ICON height grid
-    gridHeight = height_mod[0]# np.arange(0.,8000., 5.)    # grid of 5 m resolution in height
-    NgridInterp = len(gridHeight)
+    ## interpolating mean profiles and standard deviation from radiosounding on ICON height grid
+    gridHeight                    = height_mod[0]# np.arange(0.,8000., 5.)    # grid of 5 m resolution in height
+    NgridInterp                   = len(gridHeight)
     MatrixHourMeanProfileThetaRad = np.zeros((NgridInterp, len(listHourDict)))
-    MatrixHourStdProfileThetaRad = np.zeros((NgridInterp, len(listHourDict)))
-    MatrixHourMeanProfileThetaRad[MatrixHourMeanProfileThetaRad == 0 ] = np.nan
-    MatrixHourStdProfileThetaRad[MatrixHourStdProfileThetaRad == 0 ] = np.nan
+    MatrixHourStdProfileThetaRad  = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourMeanProfileThetaRad.fill(np.nan)
+    MatrixHourStdProfileThetaRad.fill(np.nan)
     
-    # loop on the hours: for each hour, we read a matrix of 
+    # loop on the hours: for each hour, we read a matrix of height and thetav from radiosondes
     for indHour in range(len(listHourDict)):
         MatrixHeightHour = listHourDict[indHour]['MatrixHeight_radios']
         MatrixHourTheta  = listHourDict[indHour]['MatrixProfile_radios']
-        sizeMatrix = np.shape(MatrixHourTheta)
-        Nradiosondes = sizeMatrix[1]
-        NheightsRad = sizeMatrix[0]
+        sizeMatrix       = np.shape(MatrixHourTheta)
+        Nradiosondes     = sizeMatrix[1]
+        NheightsRad      = sizeMatrix[0]
         MeanProfileTheta = np.zeros((NgridInterp, Nradiosondes))
-        MeanProfileTheta[MeanProfileTheta == 0] = np.nan 
+        MeanProfileTheta.fill(np.nan)
         
+        # we loop on heights in radiosondes and we average for each model 
+        # heigth grid box, the values of theta foudn in the radiosonde profiles
         for indRadiosonde in range(Nradiosondes):
             for indHeight in range(len(gridHeight)-1):
-                Hmax=gridHeight[indHeight]
-                Hmin=gridHeight[indHeight+1]
+                Hmax     = gridHeight[indHeight]
+                Hmin     = gridHeight[indHeight+1]
                 #print(Hmin,Hmax)
                 indFound = np.where((MatrixHeightHour[:,indRadiosonde] >= Hmin) *\
                                     (MatrixHeightHour[:,indRadiosonde] < Hmax))
@@ -2779,7 +2830,7 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
             # calculating mean profile of theta V for observations
             #mean_theta_V_radiosondes = np.mean()
         #if hourSel == K0:
-        lcl_mean_rad = np.nanmean(MeanProfileTheta, axis=1)
         MatrixHourMeanProfileThetaRad[:, indHour] = np.nanmean(MeanProfileTheta, axis=1)
-        MatrixHourStdProfileThetaRad[:, indHour] = np.nanstd(MeanProfileTheta, axis=1)
+        MatrixHourStdProfileThetaRad[:, indHour]  = np.nanstd(MeanProfileTheta, axis=1)
+        
     return(MatrixHourMeanProfileThetaRad, MatrixHourStdProfileThetaRad, listHourDict)
