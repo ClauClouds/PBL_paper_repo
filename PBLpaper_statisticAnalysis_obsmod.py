@@ -323,8 +323,21 @@ for indFile in range(Nfiles):
      dataset_cloudFractionIce_obs.append(new_dict[9]['iceCloudFraction'])
      dataset_cloudFractionIce_mod.append(new_dict[8]['iceCloudFraction'])
      dateArr.append(date)
-     IWV_obs.append(new_dict[3]['IWV_mwr'])
-     IWV_mod.append(new_dict[10]['IWV_iconlem'])
+     if (len(new_dict[10]['IWV_iconlem']) == 9600):
+         IWV_mod.append(new_dict[10]['IWV_iconlem'])
+     else:
+         IWVarraymod = np.zeros((9600))
+         IWVarraymod.fill(np.nan)
+         IWVarraymod[0:len(new_dict[10]['IWV_iconlem'])] = new_dict[10]['IWV_iconlem']
+         IWV_mod.append(IWVarraymod)
+     if (len(new_dict[3]['IWV_mwr']) == 9600):
+         IWV_obs.append(new_dict[3]['IWV_mwr'])
+     else:
+         IWVarrayobs = np.zeros((9600))
+         IWVarrayobs.fill(np.nan)
+         IWVarrayobs[0:len(new_dict[3]['IWV_mwr'])] = new_dict[3]['IWV_mwr']
+         IWV_obs.append(IWVarrayobs)
+
      datetime_ICON_arr.append(new_dict[10]['datetime_iconlem'])
      
 
@@ -382,6 +395,120 @@ for indFile in range(Nfiles):
 
 #%%
 
+
+
+
+# =============================================================================
+# calculating and plotting potential temperature profiles 
+# =============================================================================
+from myFunctions import f_calculateMeanThetaVModelProfiles
+theta_v_dict_obs_mod_arr = f_calculateMeanThetaVModelProfiles(time_radiosondes, \
+                                                              theta_v_radiosondes,\
+                                                              height_radiosondes, \
+                                                              lcl_radiosondes, \
+                                                              lts_radiosondes, \
+                                                              pblHeight_radiosondes, \
+                                                              theta_v_mod, \
+                                                              time_mod, \
+                                                              height_mod, \
+                                                              lcl_mod, \
+                                                              lts_mod, \
+                                                              pblHeight_mod)
+
+
+from myFunctions import f_calculateMeanProfilesPlotThetaVRadiosondes
+result = f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, height_mod)
+MatrixHourMeanProfileThetaRad = result[0]
+MatrixHourStdProfileThetaRad  = result[1]
+listHourDict                  = result[2]
+gridHeight                    = height_mod[0]
+
+# hours with radiosondes: 5,7,8,9,11,13,15,17,19,20,21,23
+# indeces               : 0,1,2,3, 4, 5, 6, 7, 8, 9,10,11
+
+indexPlot = [1,3,4,5,6,7,11]
+
+if flagPlotThetaVglobalProfiles == 1:
+    Ncols = 4
+    Nrows = 2
+    Nplots = 11
+    
+    
+    fig, ax       = plt.subplots(nrows=Nrows, ncols=Ncols, figsize=(12,10))
+    #matplotlib.rcParams['savefig.dpi'] = 300
+    plt.gcf().subplots_adjust(bottom=0.15)
+    fig.tight_layout()
+    ymax          = 2500.
+    ymin          = height_mod[0][-1]
+    xmin          = 283.
+    xmax          = 298.
+    fontSizeTitle = 16
+    fontSizeX     = 12
+    fontSizeY     = 12
+    #timeTitles = [']
+    indxArr = [0,0,0,0,1,1,1]
+    indyArr = [0,1,2,3,0,1,2]
+    lclx_obs_Arr = [289.2, 289.8, 290.8, 292., 292., 292.2, 288.]
+    lclx_mod_Arr = [286., 287., 288.1, 290., 291.2, 293., 289.5]
+
+    for indPlot in range(0,len(indxArr)):
+        
+        # reading number of profiles, lcl and pbl heights for the selected hour
+        Nprofiles = listHourDict[indexPlot[indPlot]]['Nprofiles']
+        lcl_rad_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+        lcl_rad_err    = np.nanstd(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+        lcl_mod_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['lcl_mod_hour'])
+        lcl_mod_err    = np.nanstd(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+
+        pbl_rad_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['pblHeight_rad_hour'])
+        pbl_mod_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['pblHeight_mod_hour'])
+        
+        # assigning indeces for subplot positions 
+        indx      = indxArr[indPlot]
+        indy      = indyArr[indPlot]
+        
+        #removing subplot box top and right lines
+        ax[indx,indy].spines["top"].set_visible(False)  
+        ax[indx,indy].spines["right"].set_visible(False)  
+        ax[indx,indy].get_xaxis().tick_bottom()  
+        ax[indx,indy].get_yaxis().tick_left() 
+        ax[indx,indy].text(284, 2000., 'N = '+str(Nprofiles), fontsize=10)
+        matplotlib.rc('xtick', labelsize=10)                        # sets dimension of ticks in the plots
+        matplotlib.rc('ytick', labelsize=10)                        # sets dimension of ticks in the plots
+        prof_mod  = listHourDict[indexPlot[indPlot]]['meanProfile_mod']
+        prof_obs  = MatrixHourMeanProfileThetaRad[:, indexPlot[indPlot]]
+        std_mod   = listHourDict[indexPlot[indPlot]]['stdProfileMod']
+        labelHour = listHourDict[indexPlot[indPlot]]['hour']
+        std_obs   = MatrixHourStdProfileThetaRad[:, indexPlot[indPlot]]
+        ax[indx,indy].plot(prof_obs, gridHeight, label='obs '+str(labelHour)+' UTC',  color='black')
+        ax[indx,indy].plot(prof_mod, height_mod[0], label='icon-lem',  color='red')
+        y1        = prof_obs-std_obs
+        y2        = prof_obs+std_obs
+        ax[indx,indy].fill_betweenx(gridHeight, y1, y2, where=y2>y1, facecolor='black', alpha=0.2)
+        y1        = prof_mod-std_mod
+        y2        = prof_mod+std_mod
+        ax[indx,indy].fill_betweenx(height_mod[0], y1, y2, where=y2>y1, facecolor='red', alpha=0.2)
+        ax[indx,indy].errorbar(lclx_obs_Arr[indPlot], lcl_rad_plot, fmt='ko', xerr=0, yerr=lcl_rad_err, ecolor='black')
+        ax[indx,indy].errorbar(lclx_mod_Arr[indPlot], lcl_mod_plot, fmt='ro', xerr=0, yerr=lcl_mod_err, ecolor='red')
+        ax[indx,indy].legend(loc='upper left', fontsize=12, frameon=False)
+        ax[indx,indy].set_ylim(ymin,ymax)
+        ax[indx,indy].set_xlim(xmin,xmax)
+        #plt.title('8:00 UTC', fontsize=fontSizeTitle)
+        ax[indx,indy].set_xlabel('${\Theta_v}$[K]', fontsize=fontSizeX)
+        ax[indx,indy].set_ylabel('height [m]', fontsize=fontSizeY)
+    fig.subplots_adjust(hspace=0.15, bottom=0.1,)   
+    ax[1,3].set_visible(False) # to remove last plot
+    fig.savefig(pathFig+'theta_v_globalMeanDataset_diurnal_cycle_obs_mod.png', format='png')
+
+#    
+    
+#%%
+    
+
+#%%
+
+#%%
+
 # definitions for plotting the variance of the single day and patch as a reference
 # =============================================================================
 #      varWmean_obs = varianceWmean_obs['meanProfiles']
@@ -397,11 +524,215 @@ for indFile in range(Nfiles):
 # =============================================================================
 # =============================================================================
 # =============================================================================
+
+# =============================================================================
+# 
+# =============================================================================
+# calculating and plotting IWV distributions and IWV 30 min std for each hour of the day
+# =============================================================================
+IWV_mod_nd = np.stack(IWV_mod).T
+IWV_obs_nd = np.stack(IWV_obs).T
+IWV_mod_nd = pd.DataFrame(IWV_mod_nd, index=datetime_ICON_arr[0], columns=np.arange(0,13))
+IWV_obs_nd = pd.DataFrame(IWV_obs_nd, index=datetime_ICON_arr[0], columns=np.arange(0,13))
+
+
+
+std_matrix_mod = IWV_mod_nd.resample('30min').std()   # calculating variance every 30 min for model
+std_matrix_obs = IWV_obs_nd.resample('30min').std()   # calculating variance every 30 min for obs
+
+percentiles_mod = np.nanpercentile(std_matrix_mod.values, [25, 50, 75, 90])
+percentiles_obs = np.nanpercentile(std_matrix_obs.values, [25, 50, 75, 90])
+fig, ax = plt.subplots(figsize=(8,5))
+matplotlib.rcParams['savefig.dpi'] = 100
+xmin  = 0.
+xmax  = 1.
+ymax  = 5
+nbins = 15
+ax.spines["top"].set_visible(False)  
+ax.spines["right"].set_visible(False)  
+ax.get_xaxis().tick_bottom()  
+ax.get_yaxis().tick_left()     
+matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+ax.set_ylabel('norm occurrences')
+ax.set_xlabel('${\sigma}$(IWV) [Kg/m^2]')
+    #ax.ylim(ymax)
+plt.ylim(0.,ymax)
+plt.xlim(xmin, xmax)
+plt.grid(b=True, which='major', color='#666666', linestyle=':')
+plt.hist(std_matrix_mod.values.flatten(), bins=nbins, normed=True, color='red', \
+         cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
+plt.hist(std_matrix_obs.values.flatten(), bins=nbins, normed=True, color='black', \
+         cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
+plt.hist(std_matrix_mod.values.flatten(), bins=nbins, normed=True, color='red', \
+         cumulative=False, range=[xmin, xmax], histtype='step')       
+plt.hist(std_matrix_obs.values.flatten(), bins=nbins, normed=True, color='black', \
+         cumulative=False, range=[xmin, xmax], histtype='step')      
+plt.legend(loc='upper right', fontsize=12, frameon=False)
+plt.title(' Distributions of ${\sigma}$(IWV) over 30 min' )
+plt.text(0.8, ymax-2.*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 2)))
+plt.text(0.8, ymax-2.5*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 2)))  
+fig.tight_layout()
+plt.savefig(pathFig+'sigmaIWV_distrib_stat_global.png', format='png') 
+
+
+
+#%% 
+# std(IWV) distribution per intervals of the day
+hours = [0, 6, 9, 12, 15, 18, 23]
+
+nbins   = 20
+ymax    = 10.
+xmin    = 0.
+xmax    = 1.
+indplot = 1
+fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
+matplotlib.rcParams['savefig.dpi'] = 100
+plt.gcf().subplots_adjust(bottom=0.15)
+
+for indHour in range(len(hours)-1):
+    hourInf = hours[indHour]
+    hourSup = hours[indHour+1]
+    hinf_idx = datetime.datetime(2013,4,24,hourInf,0,0)
+    hsup_idx = datetime.datetime(2013,4,24,hourSup,0,0)
+    maskT_mod = (std_matrix_mod.index > hinf_idx) * (std_matrix_mod.index < hsup_idx)
+    maskT_obs = (std_matrix_obs.index > hinf_idx) * (std_matrix_obs.index < hsup_idx)
+    mod = std_matrix_mod.loc[hinf_idx:hsup_idx,:]
+    obs = std_matrix_obs.loc[hinf_idx:hsup_idx,:]
+    percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
+    percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
+    
+    #plt.figure()
+    #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
+    #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
+    ax = plt.subplot(2,3,indplot)  
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()  
+    ax.get_yaxis().tick_left()     
+    matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+    matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+    ax.set_ylabel('norm occurrences')
+    ax.set_xlabel('${\sigma}$(IWV) [Kg/m^2]')
+    #ax.ylim(ymax)
+    plt.ylim(0.,ymax)
+    plt.xlim(xmin, xmax)
+    plt.text(0.6, ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 2)))
+    plt.text(0.6, ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 2)))  
+    plt.grid(b=True, which='major', color='#666666', linestyle=':')
+    plt.hist(mod.values.flatten(), bins=nbins, normed=True, color='red', \
+             cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
+    plt.hist(obs.values.flatten(), bins=nbins, normed=True, color='black',\
+             cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
+    plt.hist(mod.values.flatten(), bins=nbins, normed=True, color='red', \
+             cumulative=False, range=[xmin, xmax], histtype='step')
+    plt.hist(obs.values.flatten(), bins=nbins, normed=True, color='black', \
+             cumulative=False, range=[xmin, xmax], histtype='step')      
+    plt.legend(loc='upper left', fontsize=12, frameon=False)
+    ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
+    indplot= indplot+1
+fig.tight_layout()
+plt.savefig(pathFig+'sigmaIWV2_distrib_hours_stat_global.png', format='png')    
+
+
+#%%
+# IWV distributions
+fig, ax = plt.subplots(figsize=(8,5))
+matplotlib.rcParams['savefig.dpi'] = 100
+xmin = 5.
+xmax=30.
+ymax  = 0.2
+nbins = 20
+ax.spines["top"].set_visible(False)  
+ax.spines["right"].set_visible(False)  
+ax.get_xaxis().tick_bottom()  
+ax.get_yaxis().tick_left()     
+matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+ax.set_ylabel('norm occurrences')
+ax.set_xlabel('IWV [Kg/m^2]')
+    #ax.ylim(ymax)
+plt.ylim(0.,ymax)
+plt.xlim(xmin, xmax)
+plt.grid(b=True, which='major', color='#666666', linestyle=':')
+plt.hist(IWV_mod_nd.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
+plt.hist(IWV_obs_nd.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
+plt.hist(IWV_mod_nd.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], histtype='step')       
+plt.hist(IWV_obs_nd.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], histtype='step')      
+plt.legend(loc='upper left', fontsize=12, frameon=False)
+fig.tight_layout()
+plt.savefig(pathFig+'IWV_distrib_mod_obs_stat_global.png', format='png')    
+#%%
+
+""" Now, we calculate for every time serie, the variance of IWV over 30 min interval ( 12 elements array),
+ and then we calculate the distributions of these 30 min variances at the different intervals of hours 
+
+"""
+
+#%%
+# IWV distributions per hour of the day
+#IWV_obs_nd = np.vstack([IWV_obs_nd,np.nan*np.ones(6)]) 
+hours = [0, 6, 9, 12, 15, 18, 24]
+
+def hour2idx(hour, dtime=9):
+    return int(hour*3600/dtime)
+
+nbins = 20
+ymax  = 0.2
+fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
+matplotlib.rcParams['savefig.dpi'] = 100
+plt.gcf().subplots_adjust(bottom=0.15)
+xmin = 5.
+xmax=30.
+indplot = 1
+for indHour in range(len(hours)-1):
+    hourInf = hours[indHour]
+    hourSup = hours[indHour+1]
+    hinf_idx = hour2idx(hourInf)
+    hsup_idx = hour2idx(hourSup)
+    
+    mod = IWV_mod_nd[hinf_idx:hsup_idx,:]
+    obs = IWV_obs_nd[hinf_idx:hsup_idx,:]
+    percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
+    percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
+    
+    #plt.figure()
+    #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
+    #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
+    ax = plt.subplot(2,3,indplot)  
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()  
+    ax.get_yaxis().tick_left()     
+    matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+    matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+    ax.set_ylabel('norm occurrences')
+    ax.set_xlabel('IWV [Kg/m^2]')
+    #ax.ylim(ymax)
+    plt.ylim(0.,ymax)
+    plt.xlim(xmin, xmax)
+    plt.text(19., ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 1)))
+    plt.text(19., ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 1)))  
+    plt.grid(b=True, which='major', color='#666666', linestyle=':')
+    plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
+    plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
+    plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], histtype='step')       
+    plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], histtype='step')      
+    plt.legend(loc='upper left', fontsize=12, frameon=False)
+    ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
+    indplot= indplot+1
+fig.tight_layout()
+plt.savefig(pathFig+'IWV_distrib_mod_hours_obs_stat_global.png', format='png')    
+
+#=============================================================================
+
+#%%
+
 #%%
 # =============================================================================
 # plotting scatter plots of surface latent and sensible heat flux for every half hour 
 # =============================================================================
-
+##### Latent heat surface flux
 datetime_fluxes = datetime_30m[0][:-1]
 data = np.arange(-1000, 2000)
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
@@ -448,7 +779,7 @@ plt.savefig(pathFig+'LHSF_scatterplot_obs_mod_allDays.png', format='png')
 print('Latent heat plotted')
 
 #%%
-
+###### Sensible heat surface flux
 datetime_fluxes = datetime_30m[0][:-1]
 data = np.arange(-1000, 2000)
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
@@ -492,8 +823,7 @@ cbar.ax.set_yticklabels([str(datetime_fluxes[0])[11:16],\
 plt.tight_layout()
 plt.savefig(pathFig+'SHSF_scatterplot_obs_mod_allDays.png', format='png')
 #%%
-
-
+##### Evaporative fraction 
 datetime_fluxes = datetime_30m[0][:-1]
 data = np.arange(-1000, 2000)
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
@@ -658,141 +988,6 @@ plt.savefig(pathFig+'LWF_scatterplot_obs_mod_allDays.png', format='png')
 # =============================================================================
 
 #%%
-# =============================================================================
-# 
-# # =============================================================================
-# # calculating and plotting IWV distributions for each hour of the day
-# # =============================================================================
-# IWV_mod_nd = np.stack(IWV_mod).T
-# IWV_obs_nd = np.stack(IWV_obs).T
-# IWV_obs_nd = np.vstack([IWV_obs_nd,np.nan*np.ones(6)]) 
-# hours = [0, 6, 9, 12, 15, 18, 24]
-# 
-# def hour2idx(hour, dtime=9):
-#     return int(hour*3600/dtime)
-# 
-# nbins = 10
-# ymax  = 0.6
-# fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
-# matplotlib.rcParams['savefig.dpi'] = 100
-# plt.gcf().subplots_adjust(bottom=0.15)
-# xmin = 10.
-# xmax=25.
-# indplot = 1
-# for indHour in range(len(hours)-1):
-#     hourInf = hours[indHour]
-#     hourSup = hours[indHour+1]
-#     hinf_idx = hour2idx(hourInf)
-#     hsup_idx = hour2idx(hourSup)
-#     
-#     mod = IWV_mod_nd[hinf_idx:hsup_idx,:]
-#     obs = IWV_obs_nd[hinf_idx:hsup_idx,:]
-#     percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
-#     percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
-#     
-#     #plt.figure()
-#     #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
-#     #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
-#     ax = plt.subplot(2,3,indplot)  
-#     ax.spines["top"].set_visible(False)  
-#     ax.spines["right"].set_visible(False)  
-#     ax.get_xaxis().tick_bottom()  
-#     ax.get_yaxis().tick_left()     
-#     matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
-#     matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
-#     ax.set_ylabel('norm occurrences')
-#     ax.set_xlabel('IWV [Kg/m^2]')
-#     #ax.ylim(ymax)
-#     plt.ylim(0.,ymax)
-#     plt.xlim(xmin, xmax)
-#     plt.text(19., ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 1)))
-#     plt.text(19., ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 1)))  
-#     plt.grid(b=True, which='major', color='#666666', linestyle=':')
-#     plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], alpha=0.5, label='icon-lem')       
-#     plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], alpha=0.5, label='obs')       
-#     plt.legend(loc='upper left', fontsize=12, frameon=False)
-#     ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
-#     indplot= indplot+1
-# fig.tight_layout()
-# plt.savefig(pathFig+'IWV_distrib_mod_obs_stat_global.png', format='png')    
-# 
-# =============================================================================
-
-#%%
-
-
-# =============================================================================
-# calculating and plotting potential temperature profiles 
-# =============================================================================
-from myFunctions import f_calculateMeanThetaVModelProfiles
-theta_v_dict_obs_mod_arr = f_calculateMeanThetaVModelProfiles(time_radiosondes, \
-                                                              theta_v_radiosondes,\
-                                                              height_radiosondes, \
-                                                              lcl_radiosondes, \
-                                                              lts_radiosondes, \
-                                                              pblHeight_radiosondes, \
-                                                              theta_v_mod, \
-                                                              time_mod, \
-                                                              height_mod, \
-                                                              lcl_mod, \
-                                                              lts_mod, \
-                                                              pblHeight_mod)
-
-
-from myFunctions import f_calculateMeanProfilesPlotThetaVRadiosondes
-result = f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, height_mod)
-MatrixHourMeanProfileThetaRad = result[0]
-MatrixHourStdProfileThetaRad = result[1]
-listHourDict = result[2]
-gridHeight = height_mod[0]
-
-if flagPlotThetaVglobalProfiles == 1:
-    Ncols = 5
-    Nrows = 2
-    Nplots = 11
-    fig, ax       = plt.subplots(nrows=Nrows, ncols=Ncols, figsize=(14,10))
-    #matplotlib.rcParams['savefig.dpi'] = 300
-    plt.gcf().subplots_adjust(bottom=0.15)
-    fig.tight_layout()
-    ymax          = 3000.
-    ymin          = height_mod[0][-1]
-    xmin          = 280.
-    xmax          = 300.
-    fontSizeTitle = 16
-    fontSizeX     = 12
-    fontSizeY     = 12
-    #timeTitles = [']
-    
-    for indPlot in range(1, Nplots):
-        ax        = plt.subplot(2,5,indPlot)  
-        ax.spines["top"].set_visible(False)  
-        ax.spines["right"].set_visible(False)  
-        ax.get_xaxis().tick_bottom()  
-        ax.get_yaxis().tick_left() 
-        #ax.text(1.8, ymax-200., 'a)', fontsize=15)
-        matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
-        matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
-        prof_mod = listHourDict[indPlot-1]['meanProfile_mod']
-        prof_obs = MatrixHourMeanProfileThetaRad[:, indPlot-1]
-        std_mod = listHourDict[indPlot-1]['stdProfileMod']
-        labelHour = listHourDict[indPlot-1]['hour']
-        std_obs = MatrixHourStdProfileThetaRad[:, indPlot-1]
-        plt.plot(prof_obs, gridHeight, label='obs '+str(labelHour)+' UTC',  color='black')
-        plt.plot(prof_mod, height_mod[0], label='icon-lem',  color='red')
-        y1        = prof_obs-std_obs
-        y2        = prof_obs+std_obs
-        plt.fill_betweenx(gridHeight, y1, y2, where=y2>y1, facecolor='black', alpha=0.2)
-        y1        = prof_mod-std_mod
-        y2        = prof_mod+std_mod
-        plt.fill_betweenx(height_mod[0], y1, y2, where=y2>y1, facecolor='red', alpha=0.2)
-        plt.legend(loc='upper right', fontsize=14, frameon=False)
-        plt.ylim(ymin,ymax)
-        plt.xlim(xmin,xmax)
-        #plt.title('8:00 UTC', fontsize=fontSizeTitle)
-        plt.xlabel('${\Theta_v}$[K]', fontsize=fontSizeX)
-        plt.ylabel('height [m]', fontsize=fontSizeY)
-        plt.tight_layout()
-    plt.savefig(pathFig+'theta_v_globalMeanDataset_diurnal_cycle_obs_mod.png', format='png')
 
 
 # =============================================================================
