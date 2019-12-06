@@ -41,15 +41,14 @@ import matplotlib.dates as mdates
 
 from myFunctions import f_closest
 import matplotlib.pyplot as plt
-from myFunctions import f_calcPblHeight
-from myFunctions import f_cloudmask
+from myFunctions import f_calcPblHeightRN
 from myFunctions import f_calcWvariance
-from myFunctions import f_runningMeanSkewnessW
+from myFunctions import f_runningMeanSkewnessVarianceStd_W
 from myFunctions import f_PBLClass
 from myFunctions import f_calcCloudBaseTopPBLcloudsV2
 from myFunctions import f_calcCloudBaseTopPBLclouds
-
-
+from myFunctions import f_calcPblHeightTW
+from myFunctions import f_cloudmask
 
 def f_processModelOutput(path_icon, \
                          iconFilename, \
@@ -253,21 +252,48 @@ def f_processModelOutput(path_icon, \
         print('equivalent potential temperature calculated')   
     
     
-    
     # ------------------------------------------------------------------
     # --- Calculating Boundary layer height using the richardson number derivation according to Seidel Et al, 2010
     # ------------------------------------------------------------------
-    PBLHeightArr    = f_calcPblHeight(thetaV,zonalWind,merWind,height2,time)
+    device = 'mod'
+    PBLHeightArrRN    = f_calcPblHeightRN(thetaV,zonalWind,merWind,height2,time, device)
     if verboseFlag == 1: 
-        print('height of the PBL calculated')        
+        print('height of the PBL (RN) calculated')
+
+    # ------------------------------------------------------------------
+    # --- calculation of the variance, std, skewness of the vertical velocity using a running mean window 
+    # ------------------------------------------------------------------
+    timeWindowSk    = modelInputParameters['timeWindowSkVar']
+    runningWindow   = modelInputParameters['runningWindowVar']
+    resultDyn       = f_runningMeanSkewnessVarianceStd_W(time, timeWindowSk, runningWindow, height2, vertWind)
+    # output of the function : varianceW, stdWmatrix, SKmatrix
+    varianceWmatrix = resultDyn[0]
+    stdWmatrix      = resultDyn[1]
+    SKmatrix        = resultDyn[2]
+        
+    if verboseFlag == 1: 
+        print('variance, std and skewness of w calculated')
     
+    print('std max = '+str(np.nanmax(stdWmatrix)))
+    # ------------------------------------------------------------------
+    # --- Calculating Boundary layer height using the threshold on variance of w ()
+    # ------------------------------------------------------------------
+    device         = 'mod'
+    sigmaW         = stdWmatrix
+    sigmaThreshold = modelInputParameters['SigmaWThresStd'] #  m/s, threshold for std of w from Schween et al, 2014.AMT
+    PBLHeightArrTW = f_calcPblHeightTW(sigmaW,sigmaThreshold,height2,time, device)
+    if verboseFlag == 1: 
+        print('height of the PBL (TW) calculated')
+        
+
+        
     # ------------------------------------------------------------------
     # --- Calculating variance over the timewindow using running mean
     # ------------------------------------------------------------------
-    timewindow      = modelInputParameters['timewindowVar']
-    varianceWmatrix = f_calcWvariance(vertWind,time,height2,timewindow)
-    if verboseFlag == 1: 
-        print('variance of vertical velocity calculated')  
+    #timewindow      = modelInputParameters['timewindowVar']
+    #varianceWmatrix = f_calcWvariance(vertWind,time,height2,timewindow)
+    #if verboseFlag == 1: 
+    #    print('variance of vertical velocity calculated')  
 
     # ------------------------------------------------------------------
     # --- calculation of the connection of the turbulence to the surface. 
@@ -302,17 +328,7 @@ def f_processModelOutput(path_icon, \
     if verboseFlag == 1: 
         print('stability at the surface calculated')        
 
-    
-    
-    # ------------------------------------------------------------------
-    # --- calculation of the skewness of the vertical velocity using a running mean window 
-    # ------------------------------------------------------------------
-    timeWindowSk  = modelInputParameters['timeWindowSkVar']
-    runningWindow = modelInputParameters['runningWindowVar']
-    SKmatrix      = f_runningMeanSkewnessW(time, timeWindowSk, runningWindow, height2, vertWind)
-    if verboseFlag == 1: 
-        print('skewness calculated')
-    
+
 
     # ------------------------------------------------------------------
     # --- Calculation of wind shear as done for PBL  ( running mean over 30 min of sqrt(Delta U^2 + delta V^2))/delta H 
@@ -473,6 +489,8 @@ def f_processModelOutput(path_icon, \
     
     # specify dimensions of the data ( each dimension of multidimensiona array needs to be given a name and a length)
     tempgrp.createDimension('dimH', len(height2))                                 # dimension for height
+    tempgrp.createDimension('dimHlong', len(height))                                 # dimension for height
+    
     tempgrp.createDimension('dimHsurf', 1)                                         # dimension for scalar values
     tempgrp.createDimension('dimT', len(datetime_ICON))                                   # dimension for time
     tempgrp.createDimension('NclassesPBL', 8)                # dimension for the number of cloud layers found
@@ -480,11 +498,13 @@ def f_processModelOutput(path_icon, \
     tempgrp.createDimension('nchar', 5)
     
     # preallocating netCDF variables for data storage
-    varHeight             = tempgrp.createVariable('height2', 'f4', 'dimH')
+    varHeight2             = tempgrp.createVariable('height2', 'f4', 'dimH')
+    varHeight             = tempgrp.createVariable('height', 'f4', 'dimHlong')
     vardomain             = tempgrp.createVariable('domain', 'S1', 'nchar')
     vartime               = tempgrp.createVariable('datetime_ICON', 'f4', 'dimT')
     varLTS                = tempgrp.createVariable('LTS', 'f4', 'dimT')
-    varPBLheight          = tempgrp.createVariable('PBLHeightArr', 'f4', 'dimT')
+    varPBLheight          = tempgrp.createVariable('PBLHeightArrRN', 'f4', 'dimT')
+    varPBLheight2         = tempgrp.createVariable('PBLHeightArrTW', 'f4', 'dimT')
     varCBheight           = tempgrp.createVariable('cloudBase', 'f4', 'dimT')
     varCTheight           = tempgrp.createVariable('cloudTop', 'f4', 'dimT')
     varCloudLayers        = tempgrp.createVariable('NcloudLayers', 'f4', 'dimT')
@@ -514,6 +534,7 @@ def f_processModelOutput(path_icon, \
     varcloudMask          = tempgrp.createVariable('cloudMask', 'f4', ('dimT','dimH'))
     varthetaPot           = tempgrp.createVariable('theta', 'f4', ('dimT','dimH'))
     varskewnessW          = tempgrp.createVariable('skewnessW', 'f4', ('dimT','dimH'))
+    varstdWmatrix         = tempgrp.createVariable('stdWmatrix', 'f4', ('dimT','dimH'))
     varMixingRatio        = tempgrp.createVariable('r', 'f4', ('dimT','dimH'))
     varthetaL             = tempgrp.createVariable('theta_liquid', 'f4', ('dimT','dimH'))
     varthetaPot_e         = tempgrp.createVariable('theta_e', 'f4', ('dimT','dimH'))
@@ -528,11 +549,13 @@ def f_processModelOutput(path_icon, \
     varT_surf             = tempgrp.createVariable('TempSurf', 'f4', 'dimT') 
     
     # passing data into the variables
-    varHeight[:]          = height2
+    varHeight2[:]         = height2
+    varHeight[:]          = height
     vardomain             = domSel
     vartime[:]            = time
     varLTS[:]             = LTS
-    varPBLheight[:]       = PBLHeightArr
+    varPBLheight[:]       = PBLHeightArrRN
+    varPBLheight2[:]      = PBLHeightArrTW
     varCBheight[:]        = CB_array_ICON
     varCTheight[:]        = CT_array_ICON
     varCloudLayers[:]     = NcloudLayers
@@ -559,6 +582,7 @@ def f_processModelOutput(path_icon, \
     varcloudMask[:,:]     = cloudMask
     varthetaPot[:,:]      = theta
     varskewnessW[:,:]     = SKmatrix
+    varstdWmatrix[:,:]    = stdWmatrix
     varMixingRatio[:,:]   = r
     varthetaL[:,:]        = theta_liquid
     varthetaPot_e[:,:]    = theta_e
