@@ -99,18 +99,30 @@ general information on the content of the extracted pckle file:
 # cloudDict_iconlem, cloudDict_obs
 # =============================================================================
 #     dictOut = {'cloudMask':cloudMask, 
-#                'cloudBase':CB_array,
-#                'cloudTop':CT_array, 
-#                'liquidCloudFraction':mean_CF_liquid,
-#                'iceCloudFraction':mean_CF_ice, 
-#                'totalCloudFraction':mean_CF_tot, 
-#                'datetimeCloudFraction':datetime_CF, 
-#                'heightCloudFraction':height,
-#                'duration':duration,
-#                'cloudLWP':cloudLWP,
-#                'chordLength':chordLength, 
-#                'massFlux':massFlux, 
-#                'Nclouds':Nclouds,
+               'cloudBase':CB_array,
+               'cloudTop':CT_array, 
+               'Ncloudlayers':NcloudLayers,
+               'liquidCloudFraction':mean_CF_liquid,
+               'iceCloudFraction':mean_CF_ice, 
+               'totalCloudFraction':mean_CF_tot, 
+               'datetimeCloudFraction':datetime_CF, 
+               'heightCloudFraction':height,
+               'duration':duration,
+               'cloudLWP':cloudLWP,
+               'cloudLWC':cloudLWC,
+               'meanheightFromCB':meanheightFromCB,
+               'cloudMeanCB':meanCB,
+               'cloudMeanCT':meanCT,              
+               'cloudTimeEnd':cloudTimeEnd,
+               'chordLength':chordLength, 
+               'massFlux':massFlux, 
+               'timeCloudStart':cloudTimeStart, 
+               'timeCloudEnd':cloudTimeEnd,
+               'Nclouds':Nclouds,
+               'LWPall':LWP,
+               'cloudThicknessAll':cloudThickness, 
+               'UpdraftCBAll':UpdraftCB, 
+               'cloudMaturity':cloudMaturity
 #             }
 # =============================================================================
     dict_iconlem_variables = {
@@ -118,6 +130,7 @@ general information on the content of the extracted pckle file:
             'LTS_iconlem':LTS_iconlem,
             'PBLheight_iconlem':PBLheight_iconlem,
             'datetime_iconlem':datetime_ICON,
+            'T_iconlem':T_matrix_iconlem
             }
 # =============================================================================
     dict_surface_fluxes = {
@@ -195,25 +208,40 @@ fileListMod               = sorted(glob.glob(pathMod+'*.nc'))
 Nfiles                    = len(fileListMod)
 dataset_mean_variance_obs = []
 dataset_mean_variance_mod = []
-duration_obs              = []
-chordLength_obs           = []
-massFlux_obs              = []
-cloudLWP_obs              = []
-LWC_obs                   = []
-meanheightFromCB_obs      = []
-meanheightFromCB_mod      = []
-cloudMeanCB_mod           = []
-cloudMeanCT_mod           = []
-cloudMeanCB_obs           = []
-cloudMeanCT_obs           = []
-timeCloudStart_obs        = []
-timeCloudEnd_obs          = []
-duration_mod              = []
-chordLength_mod           = []
-massFlux_mod              = []
-LWC_mod                   = []
-timeCloudStart_mod        = []
-timeCloudEnd_mod          = []
+
+
+# cloud variables (mean of cloud units)
+cloudUpdraftCB_mod          = []
+cloudUpdraftCB_obs          = []
+cloudMaturity_mod           = []
+cloudMaturity_obs           = []
+datetime_ICON_arr           = []
+duration_obs                = []
+chordLength_obs             = []
+cloudMassFlux_obs                = []
+cloudLWP_obs                = []
+cloudLWP_mod                = []
+LWC_obs                     = []
+meanheightFromCB_obs        = []
+meanheightFromCB_mod        = []
+cloudMeanCB_mod             = []
+cloudMeanCT_mod             = []
+cloudMeanCB_obs             = []
+cloudMeanCT_obs             = []
+cloudThickness_mod = []
+cloudThickness_obs = []
+cloudUpdraftCB_mod = []
+cloudUpdraftCB_obs = []
+timeCloudStart_obs          = []
+timeCloudEnd_obs            = []
+duration_mod                = []
+chordLength_mod             = []
+cloudMassFlux_mod                = []
+LWC_mod                     = []
+timeCloudStart_mod          = []
+timeCloudEnd_mod            = []
+
+# cloud fraction variables
 dataset_cloudFraction_obs       = []
 dataset_cloudFraction_mod       = []
 dataset_cloudFractionLiquid_obs = []
@@ -221,9 +249,12 @@ dataset_cloudFractionLiquid_mod = []
 dataset_cloudFractionIce_obs    = []
 dataset_cloudFractionIce_mod    = []
 
-thetaV_radiosObs = []
+# thermodynamic variables
+thetaV_radiosObs  = []
 thetaV_iconlem   = []
-         
+rh_radiosObs = []
+rh_mod   = []
+T_mod   = []
 P_radiosondes = []
 T_radiosondes = []
 theta_v_radiosondes = []
@@ -241,9 +272,19 @@ lcl_mod = []
 ccl_mod = []
 lts_mod = []
 pblHeight_mod = []
+
+# global variables
 IWV_obs = []
 IWV_mod = []
-datetime_ICON_arr = []
+LWP_all_obs = []
+LWP_all_mod = []
+cloudThicknessAll_obs = []
+cloudThicknessAll_mod = []
+cloudMaturityAll_mod = []
+cloudMaturityAll_obs = []
+updraftCBall_mod = []
+updraftCBall_obs = []
+
 date_arr = []
 LHSF_mod = []
 SHSF_mod = []
@@ -252,7 +293,6 @@ SHSF_obs = []
 LHSF_err_obs = []
 SHSF_err_obs = []
 datetime_30m = []
-cloudLWP_mod = []
 LWF_mod = []
 SWF_mod = []
 LWF_obs = []
@@ -289,11 +329,14 @@ for indFile in range(Nfiles):
      infile        = open(filenameObs,'rb')
      new_dict      = pickle.load(infile, encoding='latin1')
      W_obs         = new_dict[3]['verticalWind']
- 
+     print(np.shape(np.asarray(new_dict[8]['meanheightFromCB'])))
+     print(np.shape(new_dict[8]['cloudLWC']))
+     print(np.shape(np.asarray(new_dict[9]['meanheightFromCB'])))
+     print(np.shape(new_dict[9]['cloudLWC']))     
      timeWindow    = 200 #10 #200 for 9 seconds time window corresponding 
      #to 30 min considering that PBL data have time resolution of 3 minutes
      varianceW_obs = f_calcWvariance(W_obs,time,height,timeWindow)
-     print(len(new_dict[8]['cloudLWC']))
+
      # reading cloud properties data: 
      # duration, chord length, cloud LWP, massflux, cloud fraction
      duration_obs.append(np.asarray(new_dict[9]['duration']))
@@ -302,14 +345,15 @@ for indFile in range(Nfiles):
      chordLength_mod.append(np.asarray(new_dict[8]['chordLength']))
      cloudLWP_obs.append(np.asarray(new_dict[9]['cloudLWP']))
      cloudLWP_mod.append(np.asarray(new_dict[8]['cloudLWP']))    
-     massFlux_obs.append(np.asarray(new_dict[9]['massFlux']))
-     massFlux_mod.append(np.asarray(new_dict[8]['massFlux']))
+     cloudMassFlux_obs.append(np.asarray(new_dict[9]['massFlux']))
+     cloudMassFlux_mod.append(np.asarray(new_dict[8]['massFlux']))
      meanheightFromCB_mod.append(np.asarray(new_dict[8]['meanheightFromCB']))
      meanheightFromCB_obs.append(np.asarray(new_dict[9]['meanheightFromCB']))
      cloudMeanCB_mod.append(np.asarray(new_dict[8]['cloudMeanCB']))
      cloudMeanCT_mod.append(np.asarray(new_dict[8]['cloudMeanCT']))
      cloudMeanCB_obs.append(np.asarray(new_dict[9]['cloudMeanCB']))
      cloudMeanCT_obs.append(np.asarray(new_dict[9]['cloudMeanCT']))
+     
      LWC_obs.append(np.asarray(new_dict[9]['cloudLWC']))
      LWC_mod.append(np.asarray(new_dict[8]['cloudLWC']))
      timeCloudStart_obs.append(np.asarray(new_dict[9]['timeCloudStart']))
@@ -325,19 +369,63 @@ for indFile in range(Nfiles):
      dateArr.append(date)
      if (len(new_dict[10]['IWV_iconlem']) == 9600):
          IWV_mod.append(new_dict[10]['IWV_iconlem'])
+         LWP_all_mod.append(new_dict[8]['LWPall'])
+         cloudThicknessAll_mod.append(new_dict[8]['cloudThicknessAll'])
+         updraftCBall_mod.append(new_dict[8]['UpdraftCBAll'])
+         cloudMaturityAll_mod.append(new_dict[8]['cloudMaturity'])
      else:
          IWVarraymod = np.zeros((9600))
          IWVarraymod.fill(np.nan)
+         LWParraymod = np.zeros((9600))
+         LWParraymod.fill(np.nan)
+         thicknessarraymod = np.zeros((9600))
+         thicknessarraymod.fill(np.nan)
+         maturityarraymod = np.zeros((9600))
+         maturityarraymod.fill(np.nan)
+         updraftCBarraymod = np.zeros((9600))
+         updraftCBarraymod.fill(np.nan)
+         
          IWVarraymod[0:len(new_dict[10]['IWV_iconlem'])] = new_dict[10]['IWV_iconlem']
+         LWParraymod[0:len(new_dict[8]['LWPall'])] = new_dict[8]['LWPall']
+         thicknessarraymod[0:len(new_dict[8]['cloudThicknessAll'])] = new_dict[8]['cloudThicknessAll']
+         maturityarraymod[0:len(new_dict[8]['cloudMaturity'])] = new_dict[8]['cloudMaturity']
+         updraftCBarraymod[0:len(new_dict[8]['UpdraftCBAll'])] = new_dict[8]['UpdraftCBAll']
          IWV_mod.append(IWVarraymod)
+         LWP_all_mod.append(LWParraymod)
+         cloudThicknessAll_mod.append(thicknessarraymod)
+         updraftCBall_mod.append(updraftCBarraymod)
+         cloudMaturityAll_mod.append(maturityarraymod)
+         
      if (len(new_dict[3]['IWV_mwr']) == 9600):
          IWV_obs.append(new_dict[3]['IWV_mwr'])
+         LWP_all_obs.append(new_dict[3]['LWP_mwr'])
+         cloudThicknessAll_obs.append(new_dict[9]['cloudThicknessAll'])
+         updraftCBall_obs.append(new_dict[9]['UpdraftCBAll'])
+         cloudMaturityAll_obs.append(new_dict[9]['cloudMaturity'])
+
      else:
          IWVarrayobs = np.zeros((9600))
          IWVarrayobs.fill(np.nan)
+         LWParrayobs = np.zeros((9600))
+         LWParrayobs.fill(np.nan)
+         thicknessarrayobs = np.zeros((9600))
+         thicknessarrayobs.fill(np.nan)
+         maturityarrayobs = np.zeros((9600))
+         maturityarrayobs.fill(np.nan)
+         updraftCBarrayobs = np.zeros((9600))
+         updraftCBarrayobs.fill(np.nan)
          IWVarrayobs[0:len(new_dict[3]['IWV_mwr'])] = new_dict[3]['IWV_mwr']
+         LWParrayobs[0:len(new_dict[3]['LWP_mwr'])] = new_dict[3]['LWP_mwr']
+         thicknessarrayobs[0:len(new_dict[9]['cloudThicknessAll'])] = new_dict[9]['cloudThicknessAll']
+         maturityarrayobs[0:len(new_dict[9]['cloudMaturity'])] = new_dict[9]['cloudMaturity']
+         updraftCBarrayobs[0:len(new_dict[9]['UpdraftCBAll'])] = new_dict[9]['UpdraftCBAll']
          IWV_obs.append(IWVarrayobs)
-
+         LWP_all_obs.append(LWParrayobs)
+         cloudThicknessAll_obs.append(thicknessarrayobs)
+         updraftCBall_obs.append(updraftCBarrayobs)
+         cloudMaturityAll_obs.append(maturityarrayobs)
+         
+         
      datetime_ICON_arr.append(new_dict[10]['datetime_iconlem'])
      
 
@@ -353,7 +441,8 @@ for indFile in range(Nfiles):
      ccl_radiosondes.append(RadiosondeFormatted['ccl'])
      lts_radiosondes.append(RadiosondeFormatted['lts'])
      pblHeight_radiosondes.append(RadiosondeFormatted['pblHeight'])
-     
+     rh_radiosObs.append(RadiosondeFormatted['RH'])
+    
      # reading model data from lem
      theta_v_mod.append(new_dict[5]['virtualPotentialTemperature'])
      time_mod.append(new_dict[5]['time'])
@@ -375,6 +464,15 @@ for indFile in range(Nfiles):
      LWF_err_obs.append(new_dict[11]['LW_Err_obs'])
      SWF_err_obs.append(new_dict[11]['SW_Err_obs'])
      pblHeight_mod.append(new_dict[7]['PBLHeight'])
+     rh_mod.append(new_dict[5]['relativeHumidity'])
+     T_mod.append(new_dict[10]['T_iconlem'])
+     cloudThickness_mod.append(new_dict[8]['cloudThickness'])
+     cloudThickness_obs.append(new_dict[9]['cloudThickness'])
+     cloudUpdraftCB_mod.append(new_dict[8]['cloudUpdraftCB'])
+     cloudUpdraftCB_obs.append(new_dict[9]['cloudUpdraftCB'])
+     cloudMaturity_mod.append(new_dict[8]['cloudMaturity'])
+     cloudMaturity_obs.append(new_dict[9]['cloudMaturity'])
+
      # ----------------------------------------------------------------------------------------
      # ------- Analysis of the mean hourly profiles of variance of vertical velocity for obs. ICON-LEM, ICON-INSCAPE
      # ----------------------------------------------------------------------------------------
@@ -393,22 +491,948 @@ for indFile in range(Nfiles):
      #print(new_dict[11]['LHF_iconlem'])
 
 
+
+#%%
+# drop days with no clouds in model data (real indeces are 0, 7, 9) Since every loop one index is removed, 
+# 
+LengthFull = len(LWC_mod)
+for ind in range(LengthFull):
+    if (ind < len(LWC_mod)):
+        print(LWC_mod[ind].shape)
+        if (LWC_mod[ind].shape == (0,)):
+            print('deleted')
+            print(ind)
+            del LWC_mod[ind]
+            del duration_mod[ind]
+            del meanheightFromCB_mod[ind]
+            del cloudMeanCT_mod[ind]
+            del cloudMeanCB_mod[ind]
+            del cloudMaturity_mod[ind]
+            del cloudUpdraftCB_mod[ind]
+            del cloudThickness_mod[ind]
+
+
+Ncloud_mod = len(np.concatenate(duration_mod, axis=0))
+print('Number of clouds found in model')
+print(len(np.concatenate(duration_mod, axis=0)))
+print('Number of clouds found in obs')
+print(len(np.concatenate(duration_obs, axis=0)))
+
+# processing of LWC profile: goal is to derive hourly mean LWC profile from the collected clouds for model and obs
+LWC_All_obs              = np.concatenate(LWC_obs, axis=0)
+LWC_All_mod              = np.concatenate(LWC_mod, axis=0)
+duration_all_obs         = np.concatenate(duration_obs, axis=0)
+duration_all_mod         = np.concatenate(duration_mod, axis=0)
+cloudMeanLWP_all_obs     = np.concatenate(LWC_obs, axis=0)
+meanheightFromCB_All_obs = np.concatenate(meanheightFromCB_obs, axis=0)
+meanheightFromCB_All_mod = np.concatenate(meanheightFromCB_mod, axis=0)
+cloudMeanCT_All_obs      = np.concatenate(cloudMeanCT_obs, axis=0)
+cloudMeanCB_All_obs      = np.concatenate(cloudMeanCB_obs, axis=0)
+cloudMeanCT_All_mod      = np.concatenate(cloudMeanCT_mod, axis=0)
+cloudMeanCB_All_mod      = np.concatenate(cloudMeanCB_mod, axis=0)
+cloudThickness_All_obs   = np.concatenate(cloudThickness_obs, axis=0)
+cloudThickness_All_mod   = np.concatenate(cloudThickness_mod, axis=0)
+cloudUpdraftCB_All_obs   = np.concatenate(cloudUpdraftCB_obs, axis=0)
+cloudUpdraftCB_All_mod   = np.concatenate(cloudUpdraftCB_mod, axis=0)
+cloudMaturity_All_mod    = np.concatenate(cloudMaturity_mod, axis=0)
+cloudMaturity_All_obs    = np.concatenate(cloudMaturity_obs, axis=0)
+cloudLWP_All_mod         = np.concatenate(cloudLWP_mod, axis=0)
+cloudLWP_All_obs         = np.concatenate(cloudLWP_obs, axis=0)
+cloudMassFlux_All_mod    = np.concatenate(cloudMassFlux_mod, axis=0)
+cloudMassFlux_All_obs    = np.concatenate(cloudMassFlux_obs, axis=0)
+
+
+#duration_intervals = [0, 400, 800, 1600, 3200]
+#duration_intervals       = [0, 200, 800, 1600]
+duration_intervals       = [0, 900]
+label_durations          = ['0-15 min','> 15 min']
+LWC_obs_DF               = pd.DataFrame(LWC_All_obs, index=duration_all_obs, columns=height)
+LWC_mod_DF               = pd.DataFrame(LWC_All_mod, index=duration_all_mod, columns=height)
+meanHeightFromCB_obs_DF  = pd.DataFrame(meanheightFromCB_All_obs, index=duration_all_obs, columns=height)
+meanHeightFromCB_mod_DF  = pd.DataFrame(meanheightFromCB_All_mod, index=duration_all_mod, columns=height)
+CB_obs_DF                = pd.Series(cloudMeanCB_All_obs, index=duration_all_obs)
+CB_mod_DF                = pd.Series(cloudMeanCB_All_mod, index=duration_all_mod)
+CT_obs_DF                = pd.Series(cloudMeanCT_All_obs, index=duration_all_obs)
+CT_mod_DF                = pd.Series(cloudMeanCT_All_mod, index=duration_all_mod)
+cloudMaturity_obs_DF     = pd.Series(cloudMaturity_All_obs, index=duration_all_obs)
+cloudMaturity_mod_DF     = pd.Series(cloudMaturity_All_mod, index=duration_all_mod)
+cloudUpdraftCB_obs_DF    = pd.Series(cloudUpdraftCB_All_obs, index=duration_all_obs)
+cloudUpdraftCB_mod_DF    = pd.Series(cloudUpdraftCB_All_mod, index=duration_all_mod)
+cloudThickness_obs_DF    = pd.Series(cloudThickness_All_obs, index=duration_all_obs)
+cloudThickness_mod_DF    = pd.Series(cloudThickness_All_mod, index=duration_all_mod)
+cloudLWP_obs_DF          = pd.Series(cloudLWP_All_obs, index=duration_all_obs)
+cloudLWP_mod_DF          = pd.Series(cloudLWP_All_mod, index=duration_all_mod)
+cloudMassFlux_obs_DF     = pd.Series(cloudMassFlux_All_obs, index=duration_all_obs)
+cloudMassFlux_mod_DF     = pd.Series(cloudMassFlux_All_mod, index=duration_all_mod)
 #%%
 
 
-
-
 # =============================================================================
-# calculating and plotting potential temperature profiles 
+# calculating and plotting IWV /LWP distributions and sigma(IWV)/sigma(LWP) 30 min std for all data
+# =============================================================================
+IWV_mod_nd = np.stack(IWV_mod).T
+IWV_obs_nd = np.stack(IWV_obs).T
+IWV_mod_nd = pd.DataFrame(IWV_mod_nd, index=datetime_ICON_arr[0], columns=np.arange(0,13))
+IWV_obs_nd = pd.DataFrame(IWV_obs_nd, index=datetime_ICON_arr[0], columns=np.arange(0,13))
+
+LWP_mod_nd = np.stack(LWP_all_mod).T
+LWP_obs_nd = np.stack(LWP_all_obs).T
+LWP_mod_nd = pd.DataFrame(LWP_mod_nd, index=datetime_ICON_arr[0], columns=np.arange(0,13))
+LWP_obs_nd = pd.DataFrame(LWP_obs_nd, index=datetime_ICON_arr[0], columns=np.arange(0,13))
+
+IWV_mod_nd.values[IWV_mod_nd.values < 10**(-7)] = np.nan
+LWP_mod_nd.values[LWP_mod_nd.values < 10**(-7)] = np.nan
+LWP_obs_nd.values[LWP_obs_nd.values < 0.] = np.nan
+std_matrix_mod = IWV_mod_nd.resample('30min').std()   # calculating variance every 30 min for model
+std_matrix_obs = IWV_obs_nd.resample('30min').std()   # calculating variance every 30 min for obs
+std_LWP_matrix_mod = LWP_mod_nd.resample('30min').std()   # calculating variance every 30 min for model
+std_LWP_matrix_obs = LWP_obs_nd.resample('30min').std()   # calculating variance every 30 min for obs
+
+Nbins_IWV = 10
+Nbins_LWP = 20
+range_IWV = [5., 35.]
+range_sigma_IWV = [0., 0.9]
+range_sigma_LWP = [0., 0.3]
+range_LWP = [0., 0.8]
+
+fig, ax       = plt.subplots(nrows=2, ncols=2, figsize=(10,8))
+plt.gcf().subplots_adjust(bottom=0.15)
+fig.tight_layout()
+ax                 = plt.subplot(2,2,1)  
+ax.spines["top"].set_visible(False)  
+ax.spines["right"].set_visible(False)  
+ax.get_xaxis().tick_bottom()    
+ax.get_yaxis().tick_left()  
+
+# calculating totals
+IWVDistr_mod =  IWV_mod_nd.values.flatten()
+NtotIWV_mod = len(IWVDistr_mod[np.where(~np.isnan(IWVDistr_mod))])
+
+IWVDistr_obs =  IWV_obs_nd.values.flatten()
+NtotIWV_obs = len(IWVDistr_obs[np.where(~np.isnan(IWVDistr_obs))])
+
+LWPDistr_mod =  LWP_mod_nd.values.flatten()
+NtotLWP_mod = len(LWPDistr_mod[np.where(~np.isnan(LWPDistr_mod))])
+
+LWPDistr_obs =  LWP_obs_nd.values.flatten()
+NtotLWP_obs = len(LWPDistr_obs[np.where(~np.isnan(LWPDistr_obs))])
+
+percentiles_LWPAll_mod = np.nanpercentile(LWPDistr_mod, [25, 50, 75, 90])
+percentiles_LWPAll_obs = np.nanpercentile(LWPDistr_obs, [25, 50, 75, 90])
+percentiles_IWVAll_mod = np.nanpercentile(IWVDistr_mod, [25, 50, 75, 90])
+percentiles_IWVAll_obs = np.nanpercentile(IWVDistr_obs, [25, 50, 75, 90])
+
+    
+stringplot_IWV_obs     = 'median obs = '+str(round(percentiles_IWVAll_obs[1],3))+' $kg m^{-2}$'
+stringplot_IWV_mod     = 'median mod = '+str(round(percentiles_IWVAll_mod[1],3))+' $kg m^{-2}$'
+stringplot_LWP_obs     = 'median obs = '+str(round(percentiles_LWPAll_obs[1],3))+' $kg m^{-2}$'
+stringplot_LWP_mod     = 'median mod = '+str(round(percentiles_LWPAll_mod[1],3))+' $kg m^{-2}$'
+
+
+#ax.text(1800., ylabelArrCB[indPlot], stringplot_obs, fontsize=10)
+#ax.text(1800., ylabelArrCB[indPlot]-0.0001, stringplot_mod, fontsize=10)
+ax.set_ylim(0., 0.15)
+plt.hist(IWV_obs_nd.values.flatten(), \
+                      bins=Nbins_IWV, \
+                      normed=True, \
+                      color='black', \
+                      range=range_IWV, \
+                      cumulative=False, \
+                      alpha=0.2)    
+plt.hist(IWV_obs_nd.values.flatten(), \
+                      bins=Nbins_IWV, \
+                      normed=True, \
+                      color='black', \
+                      range=range_IWV, \
+                      histtype='step', \
+                      cumulative=False)
+plt.hist(IWV_mod_nd.values.flatten(), \
+                      bins=Nbins_IWV, \
+                      normed=True, \
+                      color='red', \
+                      range=range_IWV, \
+                      cumulative=False, \
+                      alpha=0.2)    
+plt.hist(IWV_mod_nd.values.flatten(), \
+                      bins=Nbins_IWV, \
+                      normed=True, \
+                      color='red', \
+                      range=range_IWV, \
+                      histtype='step', \
+                      cumulative=False)
+ax.set_xlabel('IWV [Kg/m2]')
+ax.set_ylabel('norm occ')
+ax.text(21., 0.12, 'N model = '+str(NtotIWV_mod), fontsize=10)
+ax.text(21., 0.11, 'N obs     = '+str(NtotIWV_obs), fontsize=10)
+ax.text(21., 0.10, stringplot_IWV_obs, fontsize=10)
+ax.text(21., 0.09, stringplot_IWV_mod, fontsize=10)
+
+ax                 = plt.subplot(2,2,2)  
+ax.spines["top"].set_visible(False)  
+ax.spines["right"].set_visible(False)  
+ax.get_xaxis().tick_bottom()    
+ax.get_yaxis().tick_left()  
+#ax.text(1800., ylabelArrCB[indPlot], stringplot_obs, fontsize=10)
+#ax.text(1800., ylabelArrCB[indPlot]-0.0001, stringplot_mod, fontsize=10)
+ax.set_ylim(0., 15.)
+plt.hist(LWP_obs_nd.values.flatten(), \
+                      bins=Nbins_LWP, \
+                      normed=True, \
+                      color='black', \
+                      range=range_LWP, \
+                      cumulative=False, \
+                      alpha=0.2)    
+plt.hist(LWP_obs_nd.values.flatten(), \
+                      bins=Nbins_LWP, \
+                      normed=True, \
+                      color='black', \
+                      range=range_LWP, \
+                      histtype='step', \
+                      cumulative=False)
+plt.hist(LWP_mod_nd.values.flatten(), \
+                      bins=Nbins_LWP, \
+                      normed=True, \
+                      color='red', \
+                      range=range_LWP, \
+                      cumulative=False, \
+                      alpha=0.2)    
+plt.hist(LWP_mod_nd.values.flatten(), \
+                      bins=Nbins_LWP, \
+                      normed=True, \
+                      color='red', \
+                      range=range_LWP, \
+                      histtype='step', \
+                      cumulative=False)
+ax.set_xlabel('LWP [Kg/m2]')
+ax.set_ylabel('norm occ')
+ax.text(0.5, 12., 'N model = '+str(NtotLWP_mod), fontsize=10)
+ax.text(0.5, 11., 'N obs     = '+str(NtotLWP_obs), fontsize=10)
+ax.text(0.5, 10., stringplot_LWP_obs, fontsize=10)
+ax.text(0.5, 9., stringplot_LWP_mod, fontsize=10)
+
+
+ax                 = plt.subplot(2,2,3)  
+ax.spines["top"].set_visible(False)  
+ax.spines["right"].set_visible(False)  
+ax.get_xaxis().tick_bottom()    
+ax.get_yaxis().tick_left()  
+#ax.text(1800., ylabelArrCB[indPlot], stringplot_obs, fontsize=10)
+#ax.text(1800., ylabelArrCB[indPlot]-0.0001, stringplot_mod, fontsize=10)
+ax.set_ylim(0., 5.)
+Nbins_sigma_IWV = 10
+plt.hist(std_matrix_obs.values.flatten(), \
+                      bins=Nbins_sigma_IWV, \
+                      normed=True, \
+                      color='black', \
+                      range=range_sigma_IWV, \
+                      cumulative=False, \
+                      alpha=0.2)    
+plt.hist(std_matrix_obs.values.flatten(), \
+                      bins=Nbins_sigma_IWV, \
+                      normed=True, \
+                      color='black', \
+                      range=range_sigma_IWV, \
+                      histtype='step', \
+                      cumulative=False)
+plt.hist(std_matrix_mod.values.flatten(), \
+                      bins=Nbins_sigma_IWV, \
+                      normed=True, \
+                      color='red', \
+                      range=range_sigma_IWV, \
+                      cumulative=False, \
+                      alpha=0.2)    
+plt.hist(std_matrix_mod.values.flatten(), \
+                      bins=Nbins_sigma_IWV, \
+                      normed=True, \
+                      color='red', \
+                      range=range_sigma_IWV, \
+                      histtype='step', \
+                      cumulative=False)
+ax.set_xlabel('${\sigma}$(IWV) ')
+ax.set_ylabel('norm occ')
+
+ax                 = plt.subplot(2,2,4)  
+ax.spines["top"].set_visible(False)  
+ax.spines["right"].set_visible(False)  
+ax.get_xaxis().tick_bottom()    
+ax.get_yaxis().tick_left()  
+#ax.text(1800., ylabelArrCB[indPlot], stringplot_obs, fontsize=10)
+#ax.text(1800., ylabelArrCB[indPlot]-0.0001, stringplot_mod, fontsize=10)
+ax.set_ylim(0., 50.)
+Nbins_sigma_LWP = 20
+plt.hist(std_LWP_matrix_obs.values.flatten(), \
+                      bins=Nbins_sigma_LWP, \
+                      normed=True, \
+                      color='black', \
+                      range=range_sigma_LWP, \
+                      cumulative=False, \
+                      alpha=0.2)    
+plt.hist(std_LWP_matrix_obs.values.flatten(), \
+                      bins=Nbins_sigma_LWP, \
+                      normed=True, \
+                      color='black', \
+                      range=range_sigma_LWP, \
+                      histtype='step', \
+                      cumulative=False)
+plt.hist(std_LWP_matrix_mod.values.flatten(), \
+                      bins=Nbins_sigma_LWP, \
+                      normed=True, \
+                      color='red', \
+                      range=range_sigma_LWP, \
+                      cumulative=False, \
+                      alpha=0.2)    
+plt.hist(std_LWP_matrix_mod.values.flatten(), \
+                      bins=Nbins_sigma_LWP, \
+                      normed=True, \
+                      color='red', \
+                      range=range_sigma_LWP, \
+                      histtype='step', \
+                      cumulative=False)
+ax.set_xlabel('${\sigma}$(LWP) ')
+ax.set_ylabel('norm occ')
+fig.tight_layout()
+
+fig.savefig(pathFig+'LWP_IWV_alldata.png', format='png') 
+#percentiles_mod = np.nanpercentile(std_matrix_mod.values, [25, 50, 75, 90])
+#percentiles_obs = np.nanpercentile(std_matrix_obs.values, [25, 50, 75, 90])
+#percentiles_LWP_mod = np.nanpercentile(std_matrix_mod.values, [25, 50, 75, 90])
+#percentiles_LWP_obs = np.nanpercentile(std_matrix_obs.values, [25, 50, 75, 90])
+#xlabelArr = ['${\sigma}$(IWV) [Kg/m^2]', '${\sigma}$(LWP) [Kg/m^2]']
+#variablesObsArr = [std_matrix_obs.values.flatten(), std_LWP_matrix_obs.values.flatten()]
+#variablesModArr = [std_matrix_mod.values.flatten(), std_LWP_matrix_mod.values.flatten()]
+#titleArr = [' Distributions of ${\sigma}$(IWV) over 30 min' , ' Distributions of ${\sigma}$(LWP) over 30 min' ]
+#perc_mod_arr = [percentiles_mod[1], percentiles_LWP_mod[1]]
+#perc_obs_arr = [percentiles_obs[1], percentiles_LWP_obs[1]]
+
+#%%
+"""
+This part of the code has the goal to characterize the macroscopic cloud properties
+of clouds with duration smaller than 15 min (short lived) 
+and clouds with duration larger than 15 min (long lived)
+Here we: 
+1_ calculate mean profiles of LWC for short and long lived clouds : 
+    concept is to select all profiles within the specific duration interval. 
+    Then, we select all heights between 0 and 1 and we loop on them: for every height
+2_ calculate distributions of LWP,geometrical thickness, maturity, updrafts speeds at cloud base
+    for short and long lived clouds
+"""
+height_grid                    = np.linspace(0., 1., num=10)
+Nprofiles_durationIntervalsObs = []
+Nprofiles_durationIntervalsMod = []
+
+LWC_mean_rescaled_obs   = []
+LWC_mean_rescaled_mod   = []
+CB_obs_distr_arr        = []
+CB_mod_distr_arr        = []
+CT_obs_distr_arr        = []
+CT_mod_distr_arr        = []
+thickness_obs_distr_arr = []
+thickness_mod_distr_arr = []
+updraftCB_obs_distr_arr = []
+updraftCB_mod_distr_arr = []
+maturity_obs_distr_arr  = []
+maturity_mod_distr_arr  = []
+LWP_obs_distr_arr       = []
+LWP_mod_distr_arr       = []
+massFlux_obs_distr_arr  = []
+massFlux_mod_distr_arr  = []
+
+for indDuration in range(0, len(duration_intervals)):
+
+    # case for duration > last element of duration_intervals array
+    if ((indDuration-len(duration_intervals)+1) == 0.):
+        mask_duration_obs    = LWC_obs_DF.index > duration_intervals[indDuration]
+        mask_duration_mod    = LWC_mod_DF.index > duration_intervals[indDuration]
+        #print('interval sampled > '+str(duration_intervals[indDuration])+' s')
+    else:
+        # case for all intermediate duration intervals
+        mask_duration_obs    = (LWC_obs_DF.index > duration_intervals[indDuration]) \
+        * (LWC_obs_DF.index <= duration_intervals[indDuration+1])
+        mask_duration_mod    = (LWC_mod_DF.index > duration_intervals[indDuration]) \
+        * (LWC_mod_DF.index <= duration_intervals[indDuration+1])
+        #print('interval sampled'+str(duration_intervals[indDuration])+'-'+str(duration_intervals[indDuration+1])+' s')
+    
+    # selecting the relative heights and the LWC corresponding profiles of the selected profiles     
+    relHeightCBCT_obs_durInt = meanHeightFromCB_obs_DF.loc[mask_duration_obs,:].values
+    LWC_obs_durInt           = LWC_obs_DF.loc[mask_duration_obs,:].values
+    relHeightCBCT_mod_durInt = meanHeightFromCB_mod_DF.loc[mask_duration_mod,:].values
+    LWC_mod_durInt           = LWC_mod_DF.loc[mask_duration_mod,:].values    
+    # reading the number of profiles corresponding to the selected duration 
+    # interval and storing the value
+    N_obs                    = np.shape(relHeightCBCT_obs_durInt)[0]
+    Nprofiles_durationIntervalsObs.append(N_obs)
+    N_mod                    = np.shape(relHeightCBCT_mod_durInt)[0]
+    Nprofiles_durationIntervalsMod.append(N_mod)    
+    
+    # building array to use as index given by the duration selected in the picked interval
+    durationSelected_obs     = duration_all_obs[mask_duration_obs]
+    durationSelected_mod     = duration_all_mod[mask_duration_mod]
+    
+    # defining pandas structures for filtering and averaging the data
+    RescaledLWCMatrixObs     = np.zeros((N_obs,len(height_grid)))
+    RescaledLWCMatrixMod     = np.zeros((N_mod,len(height_grid)))
+    
+    # loop on heights: for every height and every profile, we check the heights 
+    # between the two height grid points and we average them and store them in the rescaled matrix
+    for indHeight in range(len(height_grid)-1):
+        Hmin = height_grid[indHeight]
+        Hmax = height_grid[indHeight+1]
+        
+        for indTimeProf in range(len(durationSelected_obs)):
+            ProfSel_obs                                 = pd.Series(LWC_obs_durInt[indTimeProf,:], \
+                                                index=relHeightCBCT_obs_durInt[indTimeProf,:])
+            mask_h                                      = (ProfSel_obs.index >= Hmin) * (ProfSel_obs.index <= Hmax)
+            RescaledLWCMatrixObs[indTimeProf,indHeight] = np.nanmean(ProfSel_obs.loc[mask_h])
+
+        for indTimeProf in range(len(durationSelected_mod)):
+            ProfSel_mod                                 = pd.Series(LWC_mod_durInt[indTimeProf,:], \
+                                                index=relHeightCBCT_mod_durInt[indTimeProf,:])
+            mask_h                                      = (ProfSel_mod.index >= Hmin) * (ProfSel_mod.index <= Hmax)
+            RescaledLWCMatrixMod[indTimeProf,indHeight] = np.nanmean(ProfSel_mod.loc[mask_h])
+    
+    
+    LWC_mean_rescaled_obs.append(RescaledLWCMatrixObs)
+    LWC_mean_rescaled_mod.append(RescaledLWCMatrixMod)
+    
+    
+    # calculating CB/CT distributions for each of the duration types
+    CB_obs_distr_arr.append(CB_obs_DF.loc[mask_duration_obs])
+    CB_mod_distr_arr.append(CB_mod_DF.loc[mask_duration_mod])
+    CT_obs_distr_arr.append(CT_obs_DF.loc[mask_duration_obs])
+    CT_mod_distr_arr.append(CT_mod_DF.loc[mask_duration_mod])
+    thickness_obs_distr_arr.append(cloudThickness_obs_DF.loc[mask_duration_obs])
+    thickness_mod_distr_arr.append(cloudThickness_mod_DF.loc[mask_duration_mod])
+    updraftCB_obs_distr_arr.append(cloudUpdraftCB_obs_DF.loc[mask_duration_obs])
+    updraftCB_mod_distr_arr.append(cloudUpdraftCB_mod_DF.loc[mask_duration_mod])
+    maturity_obs_distr_arr.append(cloudMaturity_obs_DF.loc[mask_duration_obs])
+    maturity_mod_distr_arr.append(cloudMaturity_mod_DF.loc[mask_duration_mod])
+    LWP_obs_distr_arr.append(cloudLWP_obs_DF.loc[mask_duration_obs])
+    LWP_mod_distr_arr.append(cloudLWP_mod_DF.loc[mask_duration_mod])
+    massFlux_obs_distr_arr.append(cloudMassFlux_obs_DF.loc[mask_duration_obs])
+    massFlux_mod_distr_arr.append(cloudMassFlux_mod_DF.loc[mask_duration_mod])    
+
+
+# calculating mean profiles for observations on the rescaled grid
+LWC_mean_prof_obs = np.zeros((len(duration_intervals),len(height_grid)))
+LWC_std_prof_obs  = np.zeros((len(duration_intervals),len(height_grid)))
+
+for indDurInt in range(len(LWC_mean_rescaled_obs)):
+    LWC_mean_prof_obs[indDurInt,:] = np.nanmean(LWC_mean_rescaled_obs[indDurInt], axis=0)
+    LWC_std_prof_obs[indDurInt,:]  = np.nanstd(LWC_mean_rescaled_obs[indDurInt], axis=0)
+    
+LWC_mean_prof_mod = np.zeros((len(duration_intervals),len(height_grid)))
+LWC_std_prof_mod  = np.zeros((len(duration_intervals),len(height_grid)))
+
+for indDurInt in range(len(LWC_mean_rescaled_mod)):
+    LWC_mean_prof_mod[indDurInt,:] = np.nanmean(LWC_mean_rescaled_mod[indDurInt], axis=0)
+    LWC_std_prof_mod[indDurInt,:]  = np.nanstd(LWC_mean_rescaled_mod[indDurInt], axis=0)   
+    
+
+#%%
+
+# plotting cloud LWP, updrafts at cloud base and mass flux distributions for short and long lived clouds
+fig = plt.figure(figsize=(12,8))
+plt.gcf().subplots_adjust(bottom=0.15)
+stringmidHours = ['0-15 min', '>15 min']
+
+Rangearr_LWP = [[0., 0.7], [0., 0.7]]#,[600., 3000.], [600., 3000.]]
+Rangearr_updraft_CB = [[-3., 3], [-3., 3]]#,[1300.,5000.], [1300., 5000.]]
+Rangearr_MassFlux = [[-4000.,4000.], [-4000.,4000.]]
+Nbins_LWP = 15 
+Nbins_updrafts = 15
+Nbins_massFlux = 15
+ylabelArrLWP = [15., 15.]
+ylabelArrUpdraft = [1.5, 1.5]
+ylabelArrMassFLux = [1.5, 1.5]
+
+indLWP = [1,4]
+indUpdraft  = [2,5]
+indMassflux = [3,6]
+ymaxArrLWP = [20., 20.]
+ymaxArrUpdraft = [2., 2.]
+ymaxArrMassFlux = [2., 2.]
+
+
+# loop on duration intervals (2)
+for indPlot in range(0,2):
+    print(indPlot)
+    LWP_cloud_obs_distr = LWP_obs_distr_arr[indPlot]
+    LWP_cloud_obs_distr[LWP_cloud_obs_distr < 0.] = np.nan
+    LWP_cloud_mod_distr = LWP_mod_distr_arr[indPlot]
+    LWP_cloud_mod_distr[LWP_cloud_mod_distr < 0.] = np.nan
+    
+    percentiles_LWP_mod = np.nanpercentile(LWP_cloud_mod_distr, [25, 50, 75, 90])
+    percentiles_LWP_obs = np.nanpercentile(LWP_cloud_obs_distr, [25, 50, 75, 90])
+    percentiles_updraft_mod = np.nanpercentile(updraftCB_mod_distr_arr[indPlot].values, [25, 50, 75, 90])
+    percentiles_updraft_obs = np.nanpercentile(updraftCB_obs_distr_arr[indPlot].values, [25, 50, 75, 90])
+    percentiles_massFlux_mod = np.nanpercentile(massFlux_mod_distr_arr[indPlot].values, [25, 50, 75, 90])
+    percentiles_massFlux_obs = np.nanpercentile(massFlux_obs_distr_arr[indPlot].values, [25, 50, 75, 90])
+    print(percentiles_LWP_mod)
+    print(percentiles_LWP_obs)
+    print(percentiles_updraft_mod)
+    print(percentiles_updraft_obs)
+    print(percentiles_massFlux_mod)
+    print(percentiles_massFlux_obs)
+    print('*********************')
+    
+
+    stringplot_obs     = 'median obs = '+str(round(percentiles_LWP_obs[1],3))+' $kg m^{-2}$'
+    stringplot_mod     = 'median mod = '+str(round(percentiles_LWP_mod[1],3))+' $kg m^{-2}$'
+    ax                 = plt.subplot(2,3,indLWP[indPlot])  
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()    
+    ax.get_yaxis().tick_left() 
+    ax.text(0.1, ylabelArrLWP[indPlot], stringplot_obs, fontsize=10)
+    ax.text(0.1, ylabelArrLWP[indPlot]-1., stringplot_mod, fontsize=10)
+    ax.set_ylabel('normalized occurrences')
+    ax.set_xlabel('LWP [$kg m^{-2}$]') 
+    ax.set_title(stringmidHours[indPlot]+\
+                 ' (Nobs = '+str(Nprofiles_durationIntervalsObs[indPlot])+','+\
+                 ' Nmod = '+str(Nprofiles_durationIntervalsMod[indPlot])+')')
+    ax.set_ylim(0., ymaxArrLWP[indPlot])
+    plt.hist(LWP_cloud_obs_distr, \
+                      bins=Nbins_LWP, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_LWP[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)    
+    plt.hist(LWP_cloud_obs_distr, \
+                      bins=Nbins_LWP, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_LWP[indPlot-1], \
+                      histtype='step', \
+                      cumulative=False)
+    plt.hist(LWP_cloud_mod_distr, \
+                      bins=Nbins_LWP, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_LWP[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(LWP_cloud_mod_distr, \
+                      bins=Nbins_LWP, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_LWP[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step')
+    
+    
+    ax                 = plt.subplot(2,3,indUpdraft[indPlot])  
+    ax.set_title(stringmidHours[indPlot])
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()    
+    ax.get_yaxis().tick_left() 
+    stringplot_obs = 'median obs = '+str(round(percentiles_updraft_obs[1],3))+' $ ms^{-1}$'
+    #plt.text(0.8, ymax-2.*ymax/10., 'median mod = '+str(round(percenties_mod[1], 2)))
+    stringplot_mod = 'median mod = '+str(round(percentiles_updraft_mod[1],3))+' $ ms^{-1}$'
+    ax.legend(loc='upper right', fontsize=12, frameon=False)
+             #ax.text(xlabelArr[indPlot-1], ylabelArr[indPlot-1], stringplot[indPlot-1], fontsize=15)
+         #        matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+         #        matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+    ax.set_ylabel('normalized occurrences')
+    ax.set_xlabel('Updraft at cloud base [$ ms^{-1}$]')   
+    ax.text(0., ylabelArrUpdraft[indPlot], stringplot_obs, fontsize=10)
+    ax.text(0., ylabelArrUpdraft[indPlot]-0.1, stringplot_mod, fontsize=10)
+    ax.set_ylim(0., ymaxArrUpdraft[indPlot])
+    plt.hist(updraftCB_obs_distr_arr[indPlot], \
+                      bins=Nbins_updrafts, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_updraft_CB[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(updraftCB_obs_distr_arr[indPlot], \
+                      bins=Nbins_updrafts, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_updraft_CB[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step') 
+    plt.hist(updraftCB_mod_distr_arr[indPlot], \
+                      bins=Nbins_updrafts, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_updraft_CB[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(updraftCB_mod_distr_arr[indPlot], \
+                      bins=Nbins_updrafts, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_updraft_CB[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step')
+    ax.set_title(stringmidHours[indPlot]+\
+                 ' (Nobs = '+str(Nprofiles_durationIntervalsObs[indPlot])+','+\
+                 ' Nmod = '+str(Nprofiles_durationIntervalsMod[indPlot])+')')
+
+
+    stringplot_obs     = 'median obs = '+str(round(percentiles_massFlux_obs[1],3))+' $kg ms^{-1}$'
+    stringplot_mod     = 'median mod = '+str(round(percentiles_massFlux_mod[1],3))+' $kg ms^{-1}$'
+    
+    
+    ax                 = plt.subplot(2,3,indMassflux[indPlot])  
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()    
+    ax.get_yaxis().tick_left() 
+    ax.text(0.1, ylabelArrMassFLux[indPlot], stringplot_obs, fontsize=10)
+    ax.text(0.1, ylabelArrMassFLux[indPlot]-0.5, stringplot_mod, fontsize=10)
+    ax.set_ylabel('normalized occurrences')
+    ax.set_xlabel('Mass Flux [$kg (ms)^{-1}$]') 
+    ax.set_title(stringmidHours[indPlot]+\
+                 ' (Nobs = '+str(Nprofiles_durationIntervalsObs[indPlot])+','+\
+                 ' Nmod = '+str(Nprofiles_durationIntervalsMod[indPlot])+')')
+    ax.set_ylim(0., ymaxArrMassFlux[indPlot])
+    plt.hist(massFlux_obs_distr_arr[indPlot], \
+                      bins=Nbins_massFlux, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_MassFlux[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)    
+    plt.hist(massFlux_obs_distr_arr[indPlot], \
+                      bins=Nbins_massFlux, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_MassFlux[indPlot-1], \
+                      histtype='step', \
+                      cumulative=False)
+    plt.hist(massFlux_mod_distr_arr[indPlot], \
+                      bins=Nbins_massFlux, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_MassFlux[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(massFlux_mod_distr_arr[indPlot], \
+                      bins=Nbins_massFlux, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_MassFlux[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step')
+    
+
+plt.tight_layout()
+plt.savefig(pathFig+'LWP_updrafts_massFlux_distributions_vs_duration.png', format='png') 
+
+
+
+
+
+
+#%%   
+
+# plotting CB , CT, geom thickness distributions for short and long lived clouds
+fig = plt.figure(figsize=(12,8))
+plt.gcf().subplots_adjust(bottom=0.15)
+stringmidHours = ['0-15 min', '>15 min']
+
+Rangearr_CB = [[600., 3000.], [600., 3000.]]#,[600., 3000.], [600., 3000.]]
+Rangearr_CT = [[800., 5000.], [800., 5000.]]#,[1300.,5000.], [1300., 5000.]]
+Rangearr_Thickness =  [[0., 1500.], [0., 2000.]]#, [0., 600.], [0., 600.]]
+Nbins_CB = 10
+Nbins_CT = 10
+Nbins_thickness = 10
+ymaxArr = [0.0017, 0.0017, 0.03]#, 0.025]
+#xlabelArr = [1400., 5000., 1000., 250.]
+ylabelArrCB = [0.0013, 0.0013]
+ylabelArrCT = [0.0013, 0.0013]
+ylabelArrCloudThickness = [0.003, 0.003]
+
+indCloudBase = [1,4]
+indCloudTop  = [2,5]
+indThickness = [3,6]
+ymaxArrCB = [0.0017, 0.0017]
+ymaxArrCT = [0.0017, 0.0017]
+ymaxArrThickness = [0.004, 0.004]
+
+
+
+# loop on duration intervals (2)
+for indPlot in range(0,2):
+    print(indPlot)
+    percentiles_CB_mod = np.nanpercentile(CB_mod_distr_arr[indPlot].values, [25, 50, 75, 90])
+    percentiles_CB_obs = np.nanpercentile(CB_obs_distr_arr[indPlot].values, [25, 50, 75, 90])
+    percentiles_CT_mod = np.nanpercentile(CT_mod_distr_arr[indPlot].values, [25, 50, 75, 90])
+    percentiles_CT_obs = np.nanpercentile(CT_obs_distr_arr[indPlot].values, [25, 50, 75, 90])
+    percentiles_thickness_mod = np.nanpercentile(thickness_mod_distr_arr[indPlot].values, [25, 50, 75, 90])
+    percentiles_thickness_obs = np.nanpercentile(thickness_obs_distr_arr[indPlot].values, [25, 50, 75, 90])
+    print(percentiles_CB_mod)
+    print(percentiles_CB_obs)
+    print(percentiles_CT_mod)
+    print(percentiles_CT_obs)
+    print(percentiles_thickness_mod)
+    print(percentiles_thickness_obs)
+    print('*********************')
+    
+    stringplot_obs     = 'median obs = '+str(round(percentiles_CB_obs[1],1))+' m'
+    stringplot_mod     = 'median mod = '+str(round(percentiles_CB_mod[1],1))+' m'
+    ax                 = plt.subplot(2,3,indCloudBase[indPlot])  
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()    
+    ax.get_yaxis().tick_left() 
+    matplotlib.rc('xtick', labelsize=10)                        # sets dimension of ticks in the plots
+    matplotlib.rc('ytick', labelsize=10)                        # sets dimension of ticks in the plots
+
+    ax.text(1800., ylabelArrCB[indPlot], stringplot_obs, fontsize=10)
+    ax.text(1800., ylabelArrCB[indPlot]-0.0001, stringplot_mod, fontsize=10)
+    ax.set_ylabel('occurrences')
+    ax.set_xlabel('Cloud base height [m]') 
+    ax.set_title(stringmidHours[indPlot]+\
+                 ' (Nobs = '+str(Nprofiles_durationIntervalsObs[indPlot])+','+\
+                 ' Nmod = '+str(Nprofiles_durationIntervalsMod[indPlot])+')')
+    ax.set_ylim(0., ymaxArrCB[indPlot])
+    plt.hist(CB_obs_distr_arr[indPlot], \
+                      bins=Nbins_CB, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_CB[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)    
+    plt.hist(CB_obs_distr_arr[indPlot], \
+                      bins=Nbins_CB, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_CB[indPlot-1], \
+                      histtype='step', \
+                      cumulative=False)
+    plt.hist(CB_mod_distr_arr[indPlot], \
+                      bins=Nbins_CB, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_CB[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(CB_mod_distr_arr[indPlot], \
+                      bins=Nbins_CB, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_CB[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step')
+    ax                 = plt.subplot(2,3,indCloudTop[indPlot])  
+    ax.set_title(stringmidHours[indPlot])
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()    
+    ax.get_yaxis().tick_left() 
+    stringplot_obs = 'median obs = '+str(round(percentiles_CT_obs[1],1))+' m'
+    #plt.text(0.8, ymax-2.*ymax/10., 'median mod = '+str(round(percenties_mod[1], 2)))
+    stringplot_mod = 'median mod = '+str(round(percentiles_CT_mod[1],1))+' m'
+    ax.legend(loc='upper right', fontsize=12, frameon=False)
+             #ax.text(xlabelArr[indPlot-1], ylabelArr[indPlot-1], stringplot[indPlot-1], fontsize=15)
+         #        matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+         #        matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+    ax.set_ylabel('occurrences')
+    ax.set_xlabel('Cloud top height [m]')   
+    ax.text(1200., ylabelArrCT[indPlot], stringplot_obs, fontsize=10)
+    ax.text(1200., ylabelArrCT[indPlot]-0.0001, stringplot_mod, fontsize=10)
+    ax.set_ylim(0., ymaxArrCT[indPlot])
+    plt.hist(CT_obs_distr_arr[indPlot], \
+                      bins=Nbins_CT, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_CT[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(CT_obs_distr_arr[indPlot], \
+                      bins=Nbins_CT, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_CT[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step') 
+    plt.hist(CT_mod_distr_arr[indPlot], \
+                      bins=Nbins_CT, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_CT[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(CT_mod_distr_arr[indPlot], \
+                      bins=Nbins_CT, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_CT[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step')
+    ax.xaxis.set_ticks(np.arange(500.,5500, 1000))
+    ax.set_title(stringmidHours[indPlot]+\
+                 ' (Nobs = '+str(Nprofiles_durationIntervalsObs[indPlot])+','+\
+                 ' Nmod = '+str(Nprofiles_durationIntervalsMod[indPlot])+')')
+
+
+    ax                 = plt.subplot(2,3,indThickness[indPlot])  
+    ax.set_title(stringmidHours[indPlot])
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()    
+    ax.get_yaxis().tick_left() 
+    stringplot_obs = 'median obs = '+str(round(percentiles_thickness_obs[1],1))+' m'
+    #plt.text(0.8, ymax-2.*ymax/10., 'median mod = '+str(round(percenties_mod[1], 2)))
+    stringplot_mod = 'median mod = '+str(round(percentiles_thickness_mod[1],1))+' m'
+    ax.legend(loc='upper right', fontsize=12, frameon=False)
+             #ax.text(xlabelArr[indPlot-1], ylabelArr[indPlot-1], stringplot[indPlot-1], fontsize=15)
+         #        matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+         #        matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+    ax.set_ylabel('occurrences')
+    ax.set_xlabel('Geometrical thickness [m]')   
+    ax.text(500., ylabelArrCloudThickness[indPlot], stringplot_obs, fontsize=10)
+    ax.text(500., ylabelArrCloudThickness[indPlot]-0.0002, stringplot_mod, fontsize=10)
+    ax.set_ylim(0., ymaxArrThickness[indPlot])
+    plt.hist(thickness_obs_distr_arr[indPlot], \
+                      bins=Nbins_thickness, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_Thickness[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(thickness_obs_distr_arr[indPlot], \
+                      bins=Nbins_thickness, \
+                      normed=True, \
+                      color='black', \
+                      range=Rangearr_Thickness[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step') 
+    plt.hist(thickness_mod_distr_arr[indPlot], \
+                      bins=Nbins_thickness, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_Thickness[indPlot-1], \
+                      cumulative=False, \
+                      alpha=0.2)
+    plt.hist(thickness_mod_distr_arr[indPlot], \
+                      bins=Nbins_thickness, \
+                      normed=True, \
+                      color='red', \
+                      range=Rangearr_Thickness[indPlot-1], \
+                      cumulative=False, \
+                      histtype='step')
+    ax.set_title(stringmidHours[indPlot]+\
+                 ' (Nobs = '+str(Nprofiles_durationIntervalsObs[indPlot])+','+\
+                 ' Nmod = '+str(Nprofiles_durationIntervalsMod[indPlot])+')')
+    ax.xaxis.set_ticks(np.arange(0.,2000., 500))
+
+plt.tight_layout()
+plt.savefig(pathFig+'CB_CT_Thickness_distributions_vs_duration.png', format='png') 
+
+#%%
+# plotting all profiles for each duration interval after regridding
+fig, ax       = plt.subplots(nrows=2, ncols=len(duration_intervals), figsize=(10,5))
+# #matplotlib.rcParams['savefig.dpi'] = 300
+plt.gcf().subplots_adjust(bottom=0.15)
+fig.tight_layout()
+ymax          = 1.
+ymin          = 0.
+xmin          = 0.
+xmaxArr       = [0.005, 0.003]#, 0.004, 0.01]
+fontSizeTitle = 16
+fontSizeX     = 12
+fontSizeY     = 12
+indPlotArr_obs = [1,2]#,3,4]
+indPlotArr_mod = [3,4]#5,6,7,8]
+
+for ind in range(0, len(LWC_mean_rescaled_obs)):
+     xmax          = xmaxArr[ind]
+     ax        = plt.subplot(2,len(duration_intervals),indPlotArr_obs[ind])  
+     ax.spines["top"].set_visible(False)  
+     ax.spines["right"].set_visible(False)  
+     ax.get_xaxis().tick_bottom()  
+     ax.get_yaxis().tick_left() 
+     ax.set_ylim(ymin, ymax)
+     ax.set_xlim(xmin, xmax)
+     ax.set_xlabel('LWC $Kg m^{-3}$')
+     ax.set_ylabel('rel. dist. from cloud base')
+     LWC_plot_obs = LWC_mean_rescaled_obs[ind]
+     for indProfile in range(np.shape(LWC_mean_rescaled_obs[ind])[0]):
+         plt.plot(LWC_plot_obs[indProfile,:], height_grid, color='black')
+         
+         
+     ax1        = plt.subplot(2,len(duration_intervals),indPlotArr_mod[ind])  
+     ax1.spines["top"].set_visible(False)  
+     ax1.spines["right"].set_visible(False)  
+     ax1.get_xaxis().tick_bottom()  
+     ax1.get_yaxis().tick_left() 
+     ax1.set_ylim(ymin, ymax)
+     ax1.set_xlim(xmin, xmax)
+     ax1.set_xlabel('LWC $Kg m^{-3}$')
+     ax1.set_ylabel('rel. dist. from cloud base')
+     LWC_plot_mod = LWC_mean_rescaled_mod[ind]
+     for indProfile in range(np.shape(LWC_mean_rescaled_mod[ind])[0]):
+         plt.plot(LWC_plot_mod[indProfile,:], height_grid, color='red')        
+plt.tight_layout()
+plt.savefig(pathFig+'LWC_all_global_profiles.png', format='png') 
+
+    
+#%%
+fig, ax       = plt.subplots(nrows=1, ncols=len(duration_intervals), figsize=(10,5))
+# #matplotlib.rcParams['savefig.dpi'] = 300
+plt.gcf().subplots_adjust(bottom=0.15)
+fig.tight_layout()
+ymax          = 0.88888889#1.
+ymin          = 0.
+xmin          = 0.
+xmaxArr       = [0.002, 0.002]#, 0.001, 0.001]
+fontSizeTitle = 16
+fontSizeX     = 12
+fontSizeY     = 12
+indPlotArr = [1,2]#,3,4]
+for ind in range(0, len(LWC_mean_rescaled_obs)):
+     xmax          = xmaxArr[ind]
+     ax        = plt.subplot(1,len(duration_intervals),indPlotArr[ind])  
+     ax.spines["top"].set_visible(False)  
+     ax.spines["right"].set_visible(False)  
+     ax.get_xaxis().tick_bottom()  
+     ax.get_yaxis().tick_left() 
+     ax.set_ylim(ymin, ymax)
+     ax.set_xlim(xmin, xmax)
+     ax.set_xlabel('LWC [$kg m^{-3}$]')
+     ax.set_ylabel('rel. dist. from cloud base')
+     ax.set_title(stringmidHours[ind])
+     plt.plot(LWC_mean_prof_obs[ind,:], height_grid, color='black', label='obs')
+
+     y1        = LWC_mean_prof_obs[ind,:]-LWC_std_prof_obs[ind,:]
+     y2        = LWC_mean_prof_obs[ind,:]+LWC_std_prof_obs[ind,:]
+     print(y1)
+     print(y2)
+     plt.fill_betweenx(height_grid, y1, y2, where=y2>y1, facecolor='black', alpha=0.2)
+     
+     plt.plot(LWC_mean_prof_mod[ind,:], height_grid, color='red', label='icon-lem')
+     y1        = LWC_mean_prof_mod[ind,:]-LWC_std_prof_mod[ind,:]
+     y2        = LWC_mean_prof_mod[ind,:]+LWC_std_prof_mod[ind,:]
+     print(y1)
+     print(y2)
+     plt.legend(loc='upper right', fontsize=12, frameon=False)
+     plt.fill_betweenx(height_grid, y1, y2, where=y2>y1, facecolor='red', alpha=0.2)
+plt.tight_layout()
+
+plt.savefig(pathFig+'LWC_mean_global_profiles.png', format='png') 
+
+
+#%%
+# =============================================================================
+# calculating and plotting potential temperature , temperature and relative humidity profiles 
 # =============================================================================
 from myFunctions import f_calculateMeanThetaVModelProfiles
 theta_v_dict_obs_mod_arr = f_calculateMeanThetaVModelProfiles(time_radiosondes, \
                                                               theta_v_radiosondes,\
+                                                              T_radiosondes, \
+                                                              rh_radiosObs, \
                                                               height_radiosondes, \
                                                               lcl_radiosondes, \
                                                               lts_radiosondes, \
                                                               pblHeight_radiosondes, \
                                                               theta_v_mod, \
+                                                              T_mod, \
+                                                              rh_mod, \
                                                               time_mod, \
                                                               height_mod, \
                                                               lcl_mod, \
@@ -421,11 +1445,16 @@ result = f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, 
 MatrixHourMeanProfileThetaRad = result[0]
 MatrixHourStdProfileThetaRad  = result[1]
 listHourDict                  = result[2]
+MatrixHourMeanProfileTRad     = result[3]
+MatrixHourStdProfileTRad      = result[4]
+MatrixHourMeanProfileRHRad    = result[5]
+MatrixHourStdProfileRHRad     = result[6]
+
 gridHeight                    = height_mod[0]
 
 # hours with radiosondes: 5,7,8,9,11,13,15,17,19,20,21,23
 # indeces               : 0,1,2,3, 4, 5, 6, 7, 8, 9,10,11
-
+#%%
 indexPlot = [1,3,4,5,6,7,11]
 
 if flagPlotThetaVglobalProfiles == 1:
@@ -500,8 +1529,155 @@ if flagPlotThetaVglobalProfiles == 1:
     ax[1,3].set_visible(False) # to remove last plot
     fig.savefig(pathFig+'theta_v_globalMeanDataset_diurnal_cycle_obs_mod.png', format='png')
 
-#    
+#%%
+#### PLOT for Temperature profiles
+flagPlotTglobalProfiles = 1
+if flagPlotTglobalProfiles == 1:
+    Ncols = 4
+    Nrows = 2
+    Nplots = 11
     
+    
+    fig, ax       = plt.subplots(nrows=Nrows, ncols=Ncols, figsize=(12,10))
+    #matplotlib.rcParams['savefig.dpi'] = 300
+    plt.gcf().subplots_adjust(bottom=0.15)
+    fig.tight_layout()
+    ymax          = 2500.
+    ymin          = height_mod[0][-1]
+    xmin          = 260.
+    xmax          = 295.
+    fontSizeTitle = 16
+    fontSizeX     = 12
+    fontSizeY     = 12
+    #timeTitles = [']
+    indxArr = [0,0,0,0,1,1,1]
+    indyArr = [0,1,2,3,0,1,2]
+    lclx_obs_Arr = [289.2, 289.8, 290.8, 292., 292., 292.2, 288.]
+    lclx_mod_Arr = [286., 287., 288.1, 290., 291.2, 293., 289.5]
+
+    for indPlot in range(0,len(indxArr)):
+        
+        # reading number of profiles, lcl and pbl heights for the selected hour
+        Nprofiles = listHourDict[indexPlot[indPlot]]['Nprofiles']
+        lcl_rad_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+        lcl_rad_err    = np.nanstd(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+        lcl_mod_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['lcl_mod_hour'])
+        lcl_mod_err    = np.nanstd(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+
+        pbl_rad_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['pblHeight_rad_hour'])
+        pbl_mod_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['pblHeight_mod_hour'])
+        
+        # assigning indeces for subplot positions 
+        indx      = indxArr[indPlot]
+        indy      = indyArr[indPlot]
+        
+        #removing subplot box top and right lines
+        ax[indx,indy].spines["top"].set_visible(False)  
+        ax[indx,indy].spines["right"].set_visible(False)  
+        ax[indx,indy].get_xaxis().tick_bottom()  
+        ax[indx,indy].get_yaxis().tick_left() 
+        ax[indx,indy].text(284, 2000., 'N = '+str(Nprofiles), fontsize=10)
+        matplotlib.rc('xtick', labelsize=10)                        # sets dimension of ticks in the plots
+        matplotlib.rc('ytick', labelsize=10)                        # sets dimension of ticks in the plots
+        prof_mod  = listHourDict[indexPlot[indPlot]]['meanProfile_T_mod']
+        prof_obs  = MatrixHourMeanProfileTRad[:, indexPlot[indPlot]]
+        std_mod   = listHourDict[indexPlot[indPlot]]['stdProfile_T_Mod']
+        labelHour = listHourDict[indexPlot[indPlot]]['hour']
+        std_obs   = MatrixHourStdProfileTRad[:, indexPlot[indPlot]]
+        ax[indx,indy].plot(prof_obs, gridHeight, label='obs '+str(labelHour)+' UTC',  color='black')
+        ax[indx,indy].plot(prof_mod, height_mod[0], label='icon-lem',  color='red')
+        y1        = prof_obs-std_obs
+        y2        = prof_obs+std_obs
+        ax[indx,indy].fill_betweenx(gridHeight, y1, y2, where=y2>y1, facecolor='black', alpha=0.2)
+        y1        = prof_mod-std_mod
+        y2        = prof_mod+std_mod
+        ax[indx,indy].fill_betweenx(height_mod[0], y1, y2, where=y2>y1, facecolor='red', alpha=0.2)
+        ax[indx,indy].legend(loc='upper left', fontsize=12, frameon=False)
+        ax[indx,indy].set_ylim(ymin,ymax)
+        ax[indx,indy].set_xlim(xmin,xmax)
+        #plt.title('8:00 UTC', fontsize=fontSizeTitle)
+        ax[indx,indy].set_xlabel('${T}$[K]', fontsize=fontSizeX)
+        ax[indx,indy].set_ylabel('height [m]', fontsize=fontSizeY)
+    fig.subplots_adjust(hspace=0.15, bottom=0.1,)   
+    ax[1,3].set_visible(False) # to remove last plot
+    fig.savefig(pathFig+'T_globalMeanDataset_diurnal_cycle_obs_mod.png', format='png')
+
+
+#%%
+
+# Plot for RH profiles 
+flagPlotRHglobalProfiles = 1
+if flagPlotRHglobalProfiles == 1:
+    Ncols = 4
+    Nrows = 2    
+    
+    fig, ax       = plt.subplots(nrows=Nrows, ncols=Ncols, figsize=(12,10))
+    #matplotlib.rcParams['savefig.dpi'] = 300
+    plt.gcf().subplots_adjust(bottom=0.15)
+    fig.tight_layout()
+    ymax          = 2500.
+    ymin          = height_mod[0][-1]
+    xmin          = 0.
+    xmax          = 100.
+    fontSizeTitle = 16
+    fontSizeX     = 12
+    fontSizeY     = 12
+    #timeTitles = [']
+    indxArr = [0,0,0,0,1,1,1]
+    indyArr = [0,1,2,3,0,1,2]
+    lclx_obs_Arr = [289.2, 289.8, 290.8, 292., 292., 292.2, 288.]
+    lclx_mod_Arr = [286., 287., 288.1, 290., 291.2, 293., 289.5]
+
+    for indPlot in range(0,len(indxArr)):
+        
+        # reading number of profiles, lcl and pbl heights for the selected hour
+        Nprofiles = listHourDict[indexPlot[indPlot]]['Nprofiles']
+        lcl_rad_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+        lcl_rad_err    = np.nanstd(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+        lcl_mod_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['lcl_mod_hour'])
+        lcl_mod_err    = np.nanstd(listHourDict[indexPlot[indPlot]]['lcl_rad_hour'])
+
+        pbl_rad_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['pblHeight_rad_hour'])
+        pbl_mod_plot   = np.nanmedian(listHourDict[indexPlot[indPlot]]['pblHeight_mod_hour'])
+        
+        # assigning indeces for subplot positions 
+        indx      = indxArr[indPlot]
+        indy      = indyArr[indPlot]
+        
+        #removing subplot box top and right lines
+        ax[indx,indy].spines["top"].set_visible(False)  
+        ax[indx,indy].spines["right"].set_visible(False)  
+        ax[indx,indy].get_xaxis().tick_bottom()  
+        ax[indx,indy].get_yaxis().tick_left() 
+        ax[indx,indy].text(284, 2000., 'N = '+str(Nprofiles), fontsize=10)
+        matplotlib.rc('xtick', labelsize=10)                        # sets dimension of ticks in the plots
+        matplotlib.rc('ytick', labelsize=10)                        # sets dimension of ticks in the plots
+        prof_mod  = listHourDict[indexPlot[indPlot]]['meanProfile_RH_mod']
+        prof_obs  = MatrixHourMeanProfileRHRad[:, indexPlot[indPlot]]
+        std_mod   = listHourDict[indexPlot[indPlot]]['stdProfile_RH_Mod']
+        labelHour = listHourDict[indexPlot[indPlot]]['hour']
+        std_obs   = MatrixHourStdProfileRHRad[:, indexPlot[indPlot]]
+        ax[indx,indy].plot(prof_obs, gridHeight, label='obs '+str(labelHour)+' UTC',  color='black')
+        ax[indx,indy].plot(prof_mod, height_mod[0], label='icon-lem',  color='red')
+        y1        = prof_obs-std_obs
+        y2        = prof_obs+std_obs
+        ax[indx,indy].fill_betweenx(gridHeight, y1, y2, where=y2>y1, facecolor='black', alpha=0.2)
+        y1        = prof_mod-std_mod
+        y2        = prof_mod+std_mod
+        ax[indx,indy].fill_betweenx(height_mod[0], y1, y2, where=y2>y1, facecolor='red', alpha=0.2)
+        ax[indx,indy].errorbar(lclx_obs_Arr[indPlot], lcl_rad_plot, fmt='ko', xerr=0, yerr=lcl_rad_err, ecolor='black')
+        ax[indx,indy].errorbar(lclx_mod_Arr[indPlot], lcl_mod_plot, fmt='ro', xerr=0, yerr=lcl_mod_err, ecolor='red')
+        ax[indx,indy].legend(loc='upper left', fontsize=12, frameon=False)
+        ax[indx,indy].set_ylim(ymin,ymax)
+        ax[indx,indy].set_xlim(xmin,xmax)
+        #plt.title('8:00 UTC', fontsize=fontSizeTitle)
+        ax[indx,indy].set_xlabel('${RH}$[%]', fontsize=fontSizeX)
+        ax[indx,indy].set_ylabel('height [m]', fontsize=fontSizeY)
+    fig.subplots_adjust(hspace=0.15, bottom=0.1,)   
+    ax[1,3].set_visible(False) # to remove last plot
+    fig.savefig(pathFig+'RH_globalMeanDataset_diurnal_cycle_obs_mod.png', format='png')
+
+
 #%%
     
 
@@ -527,147 +1703,69 @@ if flagPlotThetaVglobalProfiles == 1:
 
 # =============================================================================
 # 
-# =============================================================================
-# calculating and plotting IWV distributions and IWV 30 min std for each hour of the day
-# =============================================================================
-IWV_mod_nd = np.stack(IWV_mod).T
-IWV_obs_nd = np.stack(IWV_obs).T
-IWV_mod_nd = pd.DataFrame(IWV_mod_nd, index=datetime_ICON_arr[0], columns=np.arange(0,13))
-IWV_obs_nd = pd.DataFrame(IWV_obs_nd, index=datetime_ICON_arr[0], columns=np.arange(0,13))
-
-
-
-std_matrix_mod = IWV_mod_nd.resample('30min').std()   # calculating variance every 30 min for model
-std_matrix_obs = IWV_obs_nd.resample('30min').std()   # calculating variance every 30 min for obs
-
-percentiles_mod = np.nanpercentile(std_matrix_mod.values, [25, 50, 75, 90])
-percentiles_obs = np.nanpercentile(std_matrix_obs.values, [25, 50, 75, 90])
-fig, ax = plt.subplots(figsize=(8,5))
-matplotlib.rcParams['savefig.dpi'] = 100
-xmin  = 0.
-xmax  = 1.
-ymax  = 5
-nbins = 15
-ax.spines["top"].set_visible(False)  
-ax.spines["right"].set_visible(False)  
-ax.get_xaxis().tick_bottom()  
-ax.get_yaxis().tick_left()     
-matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
-matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
-ax.set_ylabel('norm occurrences')
-ax.set_xlabel('${\sigma}$(IWV) [Kg/m^2]')
-    #ax.ylim(ymax)
-plt.ylim(0.,ymax)
-plt.xlim(xmin, xmax)
-plt.grid(b=True, which='major', color='#666666', linestyle=':')
-plt.hist(std_matrix_mod.values.flatten(), bins=nbins, normed=True, color='red', \
-         cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
-plt.hist(std_matrix_obs.values.flatten(), bins=nbins, normed=True, color='black', \
-         cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
-plt.hist(std_matrix_mod.values.flatten(), bins=nbins, normed=True, color='red', \
-         cumulative=False, range=[xmin, xmax], histtype='step')       
-plt.hist(std_matrix_obs.values.flatten(), bins=nbins, normed=True, color='black', \
-         cumulative=False, range=[xmin, xmax], histtype='step')      
-plt.legend(loc='upper right', fontsize=12, frameon=False)
-plt.title(' Distributions of ${\sigma}$(IWV) over 30 min' )
-plt.text(0.8, ymax-2.*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 2)))
-plt.text(0.8, ymax-2.5*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 2)))  
-fig.tight_layout()
-plt.savefig(pathFig+'sigmaIWV_distrib_stat_global.png', format='png') 
-
 
 
 #%% 
 # std(IWV) distribution per intervals of the day
-hours = [0, 6, 9, 12, 15, 18, 23]
+# =============================================================================
+# hours = [0, 6, 9, 12, 15, 18, 23]
+# 
+# nbins   = 20
+# ymax    = 10.
+# xmin    = 0.
+# xmax    = 1.
+# indplot = 1
+# fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
+# matplotlib.rcParams['savefig.dpi'] = 100
+# plt.gcf().subplots_adjust(bottom=0.15)
+# 
+# for indHour in range(len(hours)-1):
+#     hourInf = hours[indHour]
+#     hourSup = hours[indHour+1]
+#     hinf_idx = datetime.datetime(2013,4,24,hourInf,0,0)
+#     hsup_idx = datetime.datetime(2013,4,24,hourSup,0,0)
+#     maskT_mod = (std_matrix_mod.index > hinf_idx) * (std_matrix_mod.index < hsup_idx)
+#     maskT_obs = (std_matrix_obs.index > hinf_idx) * (std_matrix_obs.index < hsup_idx)
+#     mod = std_matrix_mod.loc[hinf_idx:hsup_idx,:]
+#     obs = std_matrix_obs.loc[hinf_idx:hsup_idx,:]
+#     percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
+#     percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
+#     
+#     #plt.figure()
+#     #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
+#     #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
+#     ax = plt.subplot(2,3,indplot)  
+#     ax.spines["top"].set_visible(False)  
+#     ax.spines["right"].set_visible(False)  
+#     ax.get_xaxis().tick_bottom()  
+#     ax.get_yaxis().tick_left()     
+#     matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+#     matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+#     ax.set_ylabel('norm occurrences')
+#     ax.set_xlabel('${\sigma}$(IWV) [Kg/m^2]')
+#     #ax.ylim(ymax)
+#     plt.ylim(0.,ymax)
+#     plt.xlim(xmin, xmax)
+#     plt.text(0.6, ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 2)))
+#     plt.text(0.6, ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 2)))  
+#     plt.grid(b=True, which='major', color='#666666', linestyle=':')
+#     plt.hist(mod.values.flatten(), bins=nbins, normed=True, color='red', \
+#              cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
+#     plt.hist(obs.values.flatten(), bins=nbins, normed=True, color='black',\
+#              cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
+#     plt.hist(mod.values.flatten(), bins=nbins, normed=True, color='red', \
+#              cumulative=False, range=[xmin, xmax], histtype='step')
+#     plt.hist(obs.values.flatten(), bins=nbins, normed=True, color='black', \
+#              cumulative=False, range=[xmin, xmax], histtype='step')      
+#     plt.legend(loc='upper left', fontsize=12, frameon=False)
+#     ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
+#     indplot= indplot+1
+# fig.tight_layout()
+# plt.savefig(pathFig+'sigmaIWV2_distrib_hours_stat_global.png', format='png')    
+# 
+# 
+# =============================================================================
 
-nbins   = 20
-ymax    = 10.
-xmin    = 0.
-xmax    = 1.
-indplot = 1
-fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
-matplotlib.rcParams['savefig.dpi'] = 100
-plt.gcf().subplots_adjust(bottom=0.15)
-
-for indHour in range(len(hours)-1):
-    hourInf = hours[indHour]
-    hourSup = hours[indHour+1]
-    hinf_idx = datetime.datetime(2013,4,24,hourInf,0,0)
-    hsup_idx = datetime.datetime(2013,4,24,hourSup,0,0)
-    maskT_mod = (std_matrix_mod.index > hinf_idx) * (std_matrix_mod.index < hsup_idx)
-    maskT_obs = (std_matrix_obs.index > hinf_idx) * (std_matrix_obs.index < hsup_idx)
-    mod = std_matrix_mod.loc[hinf_idx:hsup_idx,:]
-    obs = std_matrix_obs.loc[hinf_idx:hsup_idx,:]
-    percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
-    percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
-    
-    #plt.figure()
-    #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
-    #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
-    ax = plt.subplot(2,3,indplot)  
-    ax.spines["top"].set_visible(False)  
-    ax.spines["right"].set_visible(False)  
-    ax.get_xaxis().tick_bottom()  
-    ax.get_yaxis().tick_left()     
-    matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
-    matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
-    ax.set_ylabel('norm occurrences')
-    ax.set_xlabel('${\sigma}$(IWV) [Kg/m^2]')
-    #ax.ylim(ymax)
-    plt.ylim(0.,ymax)
-    plt.xlim(xmin, xmax)
-    plt.text(0.6, ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 2)))
-    plt.text(0.6, ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 2)))  
-    plt.grid(b=True, which='major', color='#666666', linestyle=':')
-    plt.hist(mod.values.flatten(), bins=nbins, normed=True, color='red', \
-             cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
-    plt.hist(obs.values.flatten(), bins=nbins, normed=True, color='black',\
-             cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
-    plt.hist(mod.values.flatten(), bins=nbins, normed=True, color='red', \
-             cumulative=False, range=[xmin, xmax], histtype='step')
-    plt.hist(obs.values.flatten(), bins=nbins, normed=True, color='black', \
-             cumulative=False, range=[xmin, xmax], histtype='step')      
-    plt.legend(loc='upper left', fontsize=12, frameon=False)
-    ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
-    indplot= indplot+1
-fig.tight_layout()
-plt.savefig(pathFig+'sigmaIWV2_distrib_hours_stat_global.png', format='png')    
-
-
-#%%
-# IWV distributions
-fig, ax = plt.subplots(figsize=(8,5))
-matplotlib.rcParams['savefig.dpi'] = 100
-xmin = 5.
-xmax=30.
-ymax  = 0.2
-nbins = 20
-ax.spines["top"].set_visible(False)  
-ax.spines["right"].set_visible(False)  
-ax.get_xaxis().tick_bottom()  
-ax.get_yaxis().tick_left()     
-matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
-matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
-ax.set_ylabel('norm occurrences')
-ax.set_xlabel('IWV [Kg/m^2]')
-    #ax.ylim(ymax)
-plt.ylim(0.,ymax)
-plt.xlim(xmin, xmax)
-plt.grid(b=True, which='major', color='#666666', linestyle=':')
-plt.hist(IWV_mod_nd.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
-plt.hist(IWV_obs_nd.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
-plt.hist(IWV_mod_nd.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], histtype='step')       
-plt.hist(IWV_obs_nd.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], histtype='step')      
-plt.legend(loc='upper left', fontsize=12, frameon=False)
-fig.tight_layout()
-plt.savefig(pathFig+'IWV_distrib_mod_obs_stat_global.png', format='png')    
-#%%
-
-""" Now, we calculate for every time serie, the variance of IWV over 30 min interval ( 12 elements array),
- and then we calculate the distributions of these 30 min variances at the different intervals of hours 
-
-"""
 
 #%%
 # IWV distributions per hour of the day
@@ -682,8 +1780,8 @@ ymax  = 0.2
 fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
 matplotlib.rcParams['savefig.dpi'] = 100
 plt.gcf().subplots_adjust(bottom=0.15)
-xmin = 5.
-xmax=30.
+xmin    = 5.
+xmax    = 30.
 indplot = 1
 for indHour in range(len(hours)-1):
     hourInf = hours[indHour]
@@ -727,6 +1825,53 @@ plt.savefig(pathFig+'IWV_distrib_mod_hours_obs_stat_global.png', format='png')
 #=============================================================================
 
 #%%
+# Distributions of LWP per hour of the day
+nbins = 20
+ymax  = 0.2
+fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
+matplotlib.rcParams['savefig.dpi'] = 100
+plt.gcf().subplots_adjust(bottom=0.15)
+xmin    = 0.
+xmax    = 500.
+indplot = 1
+for indHour in range(len(hours)-1):
+    hourInf = hours[indHour]
+    hourSup = hours[indHour+1]
+    hinf_idx = hour2idx(hourInf)
+    hsup_idx = hour2idx(hourSup)
+    
+    mod = LWP_mod_nd[hinf_idx:hsup_idx,:]
+    obs = LWP_obs_nd[hinf_idx:hsup_idx,:]
+    percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
+    percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
+    
+    #plt.figure()
+    #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
+    #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
+    ax = plt.subplot(2,3,indplot)  
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    ax.get_xaxis().tick_bottom()  
+    ax.get_yaxis().tick_left()     
+    matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
+    matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
+    ax.set_ylabel('norm occurrences')
+    ax.set_xlabel('LWP [Kg/m^2]')
+    #ax.ylim(ymax)
+    plt.ylim(0.,ymax)
+    plt.xlim(xmin, xmax)
+    plt.text(19., ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 1)))
+    plt.text(19., ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 1)))  
+    plt.grid(b=True, which='major', color='#666666', linestyle=':')
+    plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
+    plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
+    plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], histtype='step')       
+    plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], histtype='step')      
+    plt.legend(loc='upper left', fontsize=12, frameon=False)
+    ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
+    indplot= indplot+1
+fig.tight_layout()
+plt.savefig(pathFig+'LWP_distrib_mod_hours_obs_stat_global.png', format='png')    
 
 #%%
 # =============================================================================
@@ -1131,7 +2276,7 @@ if flagPlotCloudFractionGlobal == 1:
 # calculating and plotting cloud properties
 # =============================================================================
 
-
+#%%
 if flagPlotCloudProperties == 1: 
     nbins      = 20
     ymax       = 0.2
@@ -1238,7 +2383,7 @@ if flagPlotCloudProperties == 1:
         plt.ylim(ymin,ymax)
         plt.xlim(0.,xmax)
         #plt.title('8:00 UTC', fontsize=fontSizeTitle)
-        plt.xlabel('${\sigma}$ [m/s]', fontsize=fontSizeX)
+        plt.xlabel('${\sigma^{2}} [m^{2}s^{-2}$]', fontsize=fontSizeX)
         plt.ylabel('height [m]', fontsize=fontSizeY)
         plt.tight_layout()
         indHourPlotStart = indHourPlotStart+1
