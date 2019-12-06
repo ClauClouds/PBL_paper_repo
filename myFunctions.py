@@ -28,15 +28,15 @@ import matplotlib.dates as mdates
 #@author: cacquist
 #"""
 def f_selectingPBLcloudWindow(date):
-""" function to select time intervals for processing cloud data in each day.
-Also, we pick which algorithm to use with each type of data.
-in particular:
-    - minmax correspond to select as cloud top the max of the cloud tops found. 
-    Clouds above 5000 mt are filtered out (done with the function 
-    f_calcCloudBaseTopPBLclouds)
-    - version2: selects boundary layer clouds with cloud base below 2500 mt and cloud tops below 
-    CB+600mt.
-"""
+    """ function to select time intervals for processing cloud data in each day.
+    Also, we pick which algorithm to use with each type of data.
+    in particular:
+        - minmax correspond to select as cloud top the max of the cloud tops found. 
+        Clouds above 5000 mt are filtered out (done with the function 
+        f_calcCloudBaseTopPBLclouds)
+        - version2: selects boundary layer clouds with cloud base below 2500 mt and cloud tops below 
+        CB+600mt.
+    """
     if date == '20130424':
         timeStart   = datetime.datetime(2013,4,24,0,0,0)
         timeEnd     = datetime.datetime(2013,4,24,23,59,59)
@@ -690,26 +690,34 @@ def f_pdfsBelowCloudBase(w_ICON, Hwind, height, datetime_ICON, datetimeHourArr, 
         
     return(verticalWindPDF_cloud, verticalWindPDF_nocloud, horizontalWindPDF_cloud, horizontalWindPDF_nocloud) 
 
-# PBL height calculation function
-#---------------------------------------------------------------------------------
-# date :  15.01.2018
-# author: Claudia Acquistapace
-# goal: calculate the boundary layer height following the richardson number derivation according to Seidel Et al, 2010
-#---------------------------------------------------------------------------------
-def f_calcPblHeight(thetaV,Uwind,Vwind,height,time):
+
+def f_calcPblHeightRN(thetaV,Uwind,Vwind,height,time,device):
+    """
+    PBL height calculation function
+    --------------------------------------------------------------------------------
+    date created :  15.01.2018
+    date modifed :  05.12.2019
+    author: Claudia Acquistapace
+    goal: calculate the boundary layer height following the richardson number
+    derivation according to Seidel Et al, 2010
+    #---------------------------------------------------------------------------------
+    """
+    g            = 9.8        # gravity constant
+    Rithreshold  = 0.25       # Threshold values for Ri
+    #Rithreshold2 = 0.2
+    dimTime      = len(time)
+    dimHeight    = len(height)
+    if (device == 'mod'):
+        zs       = height[149]                                        # height of the surface reference
+    if (device == 'obs'):
+        zs       = height[0]
+    RiMatrix     = np.zeros((dimTime, dimHeight))                    # Richardson number matrix
+    PBLheightArr = []
+    RiCol        = np.zeros((dimHeight))
     
-    g=9.8                                                # gravity constant
-    Rithreshold=0.25                                     # Threshold values for Ri
-    Rithreshold2=0.2
-    dimTime=len(time)
-    dimHeight=len(height)
-    zs=height[149]                                        # height of the surface reference
-    RiMatrix=np.zeros((dimTime, dimHeight))                    # Richardson number matrix
-    PBLheightArr=[]
-    RiCol=np.zeros((dimHeight))
     # calculating richardson number matrix
     for iTime in range(dimTime):
-        thetaS=thetaV[iTime,149]
+        thetaS = thetaV[iTime,149]
         for iHeight in range(dimHeight):
             den = ((Uwind[iTime,iHeight])**2 + (Vwind[iTime,iHeight])**2)
             if den == 0.:
@@ -730,6 +738,40 @@ def f_calcPblHeight(thetaV,Uwind,Vwind,height,time):
             PBLheightArr.append(0)
     return PBLheightArr
 
+
+def f_calcPblHeightTW(stdWmatrix,sigmaThreshold,height2,time, device):
+    """
+    PBL height calculation function based on threshold on std w method
+    --------------------------------------------------------------------------------
+    date created :  05.12.2019
+    author: Claudia Acquistapace
+    goal: calculate the boundary layer height following the method of a threshold on sigma w
+    as indicated in Schween et al., 2014. The algorithm takes the maximum of the heights below 2000m
+    at which the sigma values is larger than 0.4. 2000m is a conservative value
+    threshold obtained from the paper from Schween et al., 2014 on MLH at JOYCE 
+    #---------------------------------------------------------------------------------
+    """
+    dimTime     = len(time)
+    PBLheightTW = np.zeros((dimTime))
+
+    PBLheightTW.fill(np.nan)
+
+    #std_matrix[:,height < height[142]] = 0.
+    for ind in range(len(time)):
+        if device == 'mod':
+            column = stdWmatrix[ind,:]
+            aboveThr = column > sigmaThreshold
+            
+            #selecting heights below 2000
+            Hsel = height2[aboveThr]
+            Hbelow = Hsel[Hsel < 2000.]
+            if np.count_nonzero((Hbelow)) != 0:
+                PBLheightTW[ind] = np.nanmax(Hbelow)
+                
+
+            
+    return(PBLheightTW)
+    
 # function to calculate the convective condensation level height and temperature
 #---------------------------------------------------------------------------------
 # date :  17.05.2018
@@ -845,11 +887,27 @@ def runningMeanVariance(x, N):
 # - height array
 # - time window for the running mean (30 min for comparing to obs)
 #--------------------------------------------------------------------------------
-def f_calcWvariance(Wwind,time,height,window):
+def f_calcWvariance(Wwind,time,height,window, res):
+    """
+    OBSOLETE FUNCTION NOT USED ANYMORE
+    author: claudia acquistapace
+    date: 05.12.2019
+    goal: calculation of variance of vertical velocity. The function performs the
+    calculation of the standard deviation of vertical velocity as in the paper 
+    from Schween et al., 2014., AMT, doi:10.5194/amt-7-3685-2014
     
-    dimTime = len(time)
+    input: 
+        - Wwind: vertical velocity matrix (time, height)
+        - time: time array
+        - height: height array
+        - window: time window over which to calculate the standard deviation
+        - res: resolution at which calculate the standard deviation (in the 
+                                                                     paper it is 5 min)
+    """
+    
+    dimTime   = len(time)
     dimHeight = len(height)
-    variance = np.zeros((dimTime,dimHeight))
+    variance  = np.zeros((dimTime,dimHeight))
     
     for iheight in range(dimHeight):
         
@@ -865,34 +923,60 @@ def f_calcWvariance(Wwind,time,height,window):
     
 # skewness of vertical velocity calculation
 #---------------------------------------------------------------------------------
-# date :  17.01.2018
-# author: Claudia Acquistapace
-# goal: function that calculates the variance of the vertical velocity matrix
 #--------------------------------------------------------------------------------
-# calculating running mean skewness matrix
-def f_runningMeanSkewnessW(time, timeWindowSk, runningWindow, height, vertWind):
-    
-    dimTime=len(time)
-    dimHeight=len(height)
-    SKmatrix = np.zeros((dimTime, dimHeight))
+def f_runningMeanSkewnessVarianceStd_W(time, timeWindowSk, runningWindow, height, vertWind):
+    """ 
+        author: Claudia Acquistapace
+        date created :  17.01.2018
+        date modified: 05.12.2019
+        goal : calculate running mean skewness and standard deviation of vertical velocity over a time window
+        given. The skewness is calculated from the data of the surroundings +- timewindow/2 min
+        The mean skewness is calculated on a resolution of timeWindowSk. 
+        Processing of the data follows what indicated in Schween et al., 2014, AMT
+        DOI: 10.5194/amt-703685-2014
+        input parameters:
+            - time: time array
+            - timeWindowSk: time resolution on which to calculate the skewness (5 min in the paper)
+            - runningWindow: time window on which to calculate the running mean
+            - height: height array
+            - vertWind: matrix of w velocity (time, height)
+        output: 
+            - skewness_w matrix (time, height)
+    """
+    dimTime    = len(time)
+    dimHeight  = len(height)
+    SKmatrix   = np.zeros((dimTime, dimHeight))
+    stdWmatrix = np.zeros((dimTime,dimHeight))
+    varianceW   = np.zeros((dimTime,dimHeight))
+    SKmatrix.fill(np.nan)
+    stdWmatrix.fill(np.nan)
+    varianceW.fill(np.nan)
     
     for iTime in range(0, dimTime-1, timeWindowSk):
 
-        # for all indeces of time 
+        # condition to skip first and last half interval of time stamps not surrounded 
+        # by values
         if (iTime > runningWindow/2) & (iTime < dimTime-1-runningWindow/2):
+            
             # generating indeces to read corresponding elements in the matrix
             timeIndeces = np.arange(iTime-runningWindow/2, iTime+runningWindow/2, dtype=np.int16)
             #print(iTime)
+            
             for iHeight in range(dimHeight):
             
-                meanW = np.mean(vertWind[timeIndeces, iHeight])            # mean of the wind array
+                meanW    = np.mean(vertWind[timeIndeces, iHeight])            # mean of the wind array
                 variance = np.var(vertWind[timeIndeces, iHeight])         # variance of the wind array
-                wprime = np.subtract(vertWind[timeIndeces, iHeight],np.tile(meanW,len(timeIndeces)))
-                num = np.mean(np.power(wprime,3))
-                den = variance**(3./2.)
-                SKmatrix[iTime:iTime+timeWindowSk-1, iHeight] = num/den
                 
-    return SKmatrix
+                wprime   = np.subtract(vertWind[timeIndeces, iHeight],np.tile(meanW,len(timeIndeces)))
+                num      = np.mean(np.power(wprime,3))
+                den      = variance**(3./2.)
+                
+                stdWmatrix[iTime:iTime+timeWindowSk-1, iHeight] = np.sqrt(variance)
+                SKmatrix[iTime:iTime+timeWindowSk-1, iHeight]   = num/den
+                varianceW[iTime:iTime+timeWindowSk-1, iHeight]  = variance
+                
+    
+    return (varianceW, stdWmatrix, SKmatrix)
 
 
 
@@ -1611,9 +1695,16 @@ def f_processRadiosondesDay(fileList, yy, mm, dd):
             else:
                 RiMatrix[iHeight] = (1/den) * (g/thetaS) * (Theta_v[iHeight]-thetaS)*(height[iHeight]-zs)
                    
-                 
+                
+        
         # find index in height where Ri > Rithreshold
         RiCol=RiMatrix[:]
+
+        # averaging lowest 100 mt of Ri matrix values
+        indHeightMean = np.where(height < 100.)
+        RImeanval = np.nanmean(RiCol[indHeightMean])
+        RiCol[indHeightMean] = np.repeat(RImeanval, len(indHeightMean))
+        
         #print(RiCol)
         #print(np.where(RiCol > Rithreshold2)[0][:])
         #print(len(np.where(RiCol > Rithreshold)[0][:]))
@@ -1735,8 +1826,8 @@ def f_calcDynamics(w,u,v,thetaV,time,height,timeWindow):
     varW = f_calcWvariance(w,time,height,timeWindow)
         
     #print('Calculating PBL height with Richardson number method')
-    from myFunctions import f_calcPblHeight
-    PBLHeightArr    = f_calcPblHeight(thetaV,u,v,height,time)
+    from myFunctions import f_calcPblHeightRN
+    PBLHeightArr    = f_calcPblHeightRN(thetaV,u,v,height,time)
 
     # calculation of wind direction and intensity for model output
     windData_ICON   = f_calcWindSpeed_Dir(time, height, v, u)
@@ -1807,15 +1898,17 @@ def f_calculateAllCloudQuantities(CloudInfo, \
                                   verboseFlag, \
                                   debuggingFlag, \
                                   pathDebugFig):
-    # code develop to calculate cloud base, cloud top, cloud fraction, when they are not 
+    """ 
+    @ author  : claudia acquistapace
+    @ date    : 30 july 2019
+    @ modified: 11 November 2019
+    @ contact : cacquist@meteo.uni-koeln.de
+    @ goal    : code develop to calculate cloud base, cloud top, cloud fraction, when they are not 
     # previously calculated, for observations and model in the same way. 
-    #In addition, it identifies cloud units and counts the amount of clouds detected during
+    # In addition, it identifies cloud units and counts the amount of clouds detected during
     # the day and for obs and model, it derives duration, chord length, massFlux and cloudLWP
-    # author: claudia acquistapace
-    # date: 30 july 2019
-    # modified: 11 November 2019
-    # contact: cacquist@meteo.uni-koeln.de
-    # input: 
+    
+    @ input   : 
     #     - CloudInfo: this input variable is - cloudnet target categorization data matrix for obs (cloudnet_res.data)
     #                                         - cloud mask for the model output
     #     - time
@@ -1830,8 +1923,8 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     #     - QcThreshold: threshold value to consider for reading Qc matrix from iconlem model output
     #     - iconLemData: data structure containing iconlem extracted variables
     #     - device: string specifying if observations ('obs') or model data ('iconlem') are processed.
-    # output: dictionary containing
-    #cloudMask':cloudMask, 
+    @ output: dictionary containing
+    #            cloudMask':cloudMask, 
     #           'cloudBase':CB_array,
     #           'cloudTop':CT_array, 
     #           'liquidCloudFraction':mean_CF_liquid (mean profiles calculated over 30 minutes)
@@ -1844,6 +1937,7 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     #           'chordLength':chordLength of each cloud found. 
     #           'massFlux':massFlux of each cloud found.
     #           'Nclouds':Nclouds,
+    """
     from myFunctions import f_cloudmask
     from myFunctions import f_calcCloudBaseTopPBLcloudsV2
     from myFunctions import f_calcCloudBaseTopPBLclouds
@@ -1854,7 +1948,14 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     from cloudnetFunctions import f_calculateCloudMaskCloudnet 
     
     date = str(yy)+str(mm)+str(dd)
-    # checking if the input is model or observations
+    
+    # read temperature field from the model for both obs and modeling
+    T = iconLemData.groups['Temp_data'].variables['T'][:].copy()
+    
+    # checking if the input is model or observations: in this case calculation 
+    # of CB, CT, cloud fraction, cloud mask, reassignement of the variable LWC 
+    # to ZE_lin as it really is, filtering Ze between cloud base and cloud top 
+    # and calculating corresponding LWC profile for each CB?CT identified
     if device == 'obs':
         
         stringData     = 'obs'
@@ -1910,7 +2011,9 @@ def f_calculateAllCloudQuantities(CloudInfo, \
             print('filtering Ze linear values between cloud base and cloud top (PBL) for each time, \
                   removed values of Ze for clouds excluded from the data')
             print('calculating LWC with Frisch approach from Ze for observations')
-        
+    
+    # check if input is from model: in that case, reads CB/CT calculated, Qc, Qi, 
+    #calculates cloud fraction, cloud mask, 
     if device == 'iconlem':
         stringData     = 'iconlem'
         Qi             = iconLemData.groups['Temp_data'].variables['Qi'][:].copy()
@@ -1923,7 +2026,8 @@ def f_calculateAllCloudQuantities(CloudInfo, \
         # calculating 30 min mean profiles of cloud fraction for ICON-LEM
         cloudFraction  = f_calculateCloudFractionICON(Qi, Qc, \
                         yy, mm, dd, time, height, QiThreshold, QcThreshold)
-
+        LWC            = Qc
+        
         if verboseFlag == 1:
             print('cloud fraction and cloud mask calculated for model output')    
 
@@ -1936,32 +2040,65 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     mean_CF_ice    = cloudFraction['IceCloudFraction'] 
     mean_CF_tot    = cloudFraction['TotalCloudFraction'] 
     datetime_CF    = cloudFraction['time'] 
+    
+    # calculating cloud thickness and cloud maturity (T(CB)-T(CT))
+    # the meaning is >> 0 : very convective cloud (young)
+    #                 ~ 0: diluted cloud without buoyancy (old)
+    cloudThickness = CT_array - CB_array
+    
+    # updraft speed at cloud base
+    UpdraftCB = np.zeros(len(CB_array))
+    UpdraftCB.fill(np.nan)
+    for indT in range(len(CB_array)):
+        if (~np.isnan(CB_array[indT])):
+            indCB               = f_closest(height, CB_array[indT])
+            UpdraftCB[indT]     = Wwind[indT,indCB]
 
-    # calculation of  cloud duration, chord length, mass flux and mean LWP for each cloud unit identified
-    Dict_Clouds_arr  = f_calculateCloudProperties(time, height, CB_array, CT_array, LWP, Hwind, Wwind, LWC)
-    duration         = []
-    chordLength      = []
-    massFlux         = []
-    cloudLWP         = []
-    cloudLWC         = [] 
-    cloudTimeStart   = []
-    cloudTimeEnd     = []
-    meanheightFromCB = []
-    meanCT           = []
-    meanCB           = []
-    Nclouds          = len(Dict_Clouds_arr)
+    # calculation of cloud duration, chord length, mass flux and mean LWP for each cloud unit identified
+    Dict_Clouds_arr  = f_calculateCloudProperties(time, \
+                                                  height, \
+                                                  CB_array, \
+                                                  CT_array, \
+                                                  UpdraftCB, \
+                                                  LWP, \
+                                                  Hwind, \
+                                                  Wwind, \
+                                                  LWC)
+    duration           = []
+    chordLength        = []
+    massFlux           = []
+    cloudLWP           = []
+    cloudTimeStart     = []
+    cloudTimeEnd       = []
+    meanCT             = []
+    meanCB             = []
+    meanCloudMaturity  = []
+    meanCloudThickness = []
+    meanUpdraftCB      = []
+    Nclouds            = len(Dict_Clouds_arr)
+    meanheightFromCB   = np.zeros((Nclouds, len(height)))
+    cloudLWC           = np.zeros((Nclouds, len(height))) 
+    cloudLWC.fill(np.nan)
+    meanheightFromCB.fill(np.nan)
+    
+    # building arrays in which each element correspond to a cloud
     for iCloud in range(Nclouds):
         duration.append(Dict_Clouds_arr[iCloud]['duration'].total_seconds())
         chordLength.append(Dict_Clouds_arr[iCloud]['chordLength'])
         massFlux.append(Dict_Clouds_arr[iCloud]['MassFlux'])    
         cloudLWP.append(Dict_Clouds_arr[iCloud]['meanLWP'])    
-        cloudLWC.append(Dict_Clouds_arr[iCloud]['meanLWC'])
+        cloudLWC[iCloud,:] = Dict_Clouds_arr[iCloud]['meanLWC']
+        #.append(Dict_Clouds_arr[iCloud]['meanLWC'])
         cloudTimeStart.append(Dict_Clouds_arr[iCloud]['timeStart'])
         cloudTimeEnd.append(Dict_Clouds_arr[iCloud]['timeEnd'])
-        meanheightFromCB.append(Dict_Clouds_arr[iCloud]['meanheightFromCB'])
+        #meanheightFromCB.append(Dict_Clouds_arr[iCloud]['meanheightFromCB'])
+        meanheightFromCB[iCloud,:] = Dict_Clouds_arr[iCloud]['meanheightFromCB']
         meanCT.append(Dict_Clouds_arr[iCloud]['meanCT'])
         meanCB.append(Dict_Clouds_arr[iCloud]['meanCB'])
-
+        meanCloudMaturity.append(Dict_Clouds_arr[iCloud]['meanCloudMaturity'])
+        meanCloudThickness.append(Dict_Clouds_arr[iCloud]['cloudThickness'])
+        meanUpdraftCB.append(Dict_Clouds_arr[iCloud]['meanUpdraftSpeedCB'])
+        
     if verboseFlag == 1:
         print('cloud properties of duration, chord length, mass flux, mean cloud LWC and LWP calculated')
 
@@ -1995,7 +2132,8 @@ def f_calculateAllCloudQuantities(CloudInfo, \
         cbar.aspect=80
         plt.savefig(pathDebugFig+'cloudMask_'+stringData+'_'+date+'.png', format='png')
 
-    # define output dictionary of data
+    # define output dictionary of data: lenght of each element of the dictionary 
+    # is given by the number of clouds found in the day
     dictOut = {}
     dictOut = {'cloudMask':cloudMask, 
                'cloudBase':CB_array,
@@ -2011,14 +2149,24 @@ def f_calculateAllCloudQuantities(CloudInfo, \
                'cloudLWC':cloudLWC,
                'meanheightFromCB':meanheightFromCB,
                'cloudMeanCB':meanCB,
-               'cloudMeanCT':meanCT,              
+               'cloudMeanCT':meanCT,
                'cloudTimeEnd':cloudTimeEnd,
                'chordLength':chordLength, 
                'massFlux':massFlux, 
                'timeCloudStart':cloudTimeStart, 
                'timeCloudEnd':cloudTimeEnd,
+               'cloudMaturity':meanCloudMaturity,
+               'cloudThickness':meanCloudThickness,
+               'cloudUpdraftCB':meanUpdraftCB,
                'Nclouds':Nclouds,
+               'LWPall':LWP,
+               'cloudThicknessAll':cloudThickness, 
+               'UpdraftCBAll':UpdraftCB, 
+               'cloudMaturityAll':cloudMaturity
             }
+    if device == 'obs':
+        print('shape of meanHeight inside the function')
+        print(np.shape(meanheightFromCB))
     return(dictOut)
 
 
@@ -2038,104 +2186,35 @@ def f_calculateAllCloudQuantities(CloudInfo, \
 # output: array of dictionaries: every dictionary correspond to an identified cloud, and contains the clodu properties
 # -DictCloudPropArr
 #--------------------------------------------------------------------------------
-def f_calculateCloudProperties(datetime_ICON, height_ICON, CB_array_ICON, CT_array_ICON, LWP_ICON, Hwind_ICON, w_ICON, LWC):
-    
-    # f_calculateCloudProperties(time, height, CB_array, LWP, Hwind, Wwind, LWC)
-    LWC[LWC==0]= np.nan   # setting to nans null values for better averaging
-    cloudStart = 0
-    Dict_Clouds_arr = []
-    
-    # assigning starting and ending time of cloudy intervals considered continuous clouds
-    for itime in range(len(datetime_ICON)):
-        
-        if (np.isnan(CB_array_ICON[itime]) == False) * (cloudStart == 0): #cb found, cloud not started yet
-            cloudStart = 1
-            timeStart = datetime_ICON[itime]
-            indStart = itime
-        # if cb found and cloudstart =1, loop does not do anything: this corresponds to the cloudy part
-        if (np.isnan(CB_array_ICON[itime]) == True) * (cloudStart == 1): # se Cb not found, \
-            #and cloudstart =1 (comes from a cloud), then it saves the previous time step as timeEnd \
-            # and puts to zero the cloud flag again, ready for a new cloud. Saves time indeces and values in the dictionary
-            # and sets timestart and end to nans
-            #print('sono qua')
-            timeEnd = datetime_ICON[itime-1]
-            indEnd = itime-1
-            cloudStart = 0
-            dict_cloud = {'timeStart':timeStart, 'indStart':indStart, 'timeEnd':timeEnd, 'indEnd':indEnd}
-            Dict_Clouds_arr.append(dict_cloud)
-            timeStart = np.nan
-            timeEnd = np.nan
-            
-    # filtering LWC profiles below CB and above cloud top to nans
-    for itime in range(len(datetime_ICON)):
-        if ((~np.isnan(CB_array_ICON[itime])) or (~np.isnan(CT_array_ICON[itime]))): 
-            #fig, ax          = plt.subplots(figsize=(4,4))
-            #plt.plot(height_ICON, LWC[itime,:], label='before', color='red')
-            LWC_prof_DF  = pd.Series(LWC[itime,:], index=height_ICON)
-            mask_CB      = (LWC_prof_DF.index < CB_array_ICON[itime]) 
-            LWC_prof_DF.loc[mask_CB] = np.nan
-            mask_CT      = (LWC_prof_DF.index > CT_array_ICON[itime])
-            LWC_prof_DF.loc[mask_CT] = np.nan
-            LWC[itime,:] = LWC_prof_DF.values
-            #plt.plot(height_ICON, LWC[itime,:], label='after', color='blue', linestyle=':')
-            #plt.axvline(x=CB_array_ICON[itime])
-            #plt.axvline(x=CT_array_ICON[itime])
-            #plt.xlim(0., 6000.)
-            #plt.savefig('/work/cacquist/HDCP2_S2/statistics/debug/'+str(itime))
-        else:
-            LWC[itime,:] = np.repeat(np.nan, len(height_ICON))
-
-    
-    # calculating cloud duration, velocity below cloud base, mean cloud base height,\
-    # cloud chord lenght and corresponding mass flux as defined in (Lareau et al, 2018., JAS)
-    DictCloudPropArr = []
-    for iCloud in range(len(Dict_Clouds_arr)):
-        
-        timeStart  = Dict_Clouds_arr[iCloud]['timeStart']
-        timeEnd    = Dict_Clouds_arr[iCloud]['timeEnd']
-        duration   = timeEnd - timeStart
-        
-        # calculating corresponding mean LWP, std LWP, mean CB height, 
-        iTimeStart = Dict_Clouds_arr[iCloud]['indStart']
-        iTimeEnd   = Dict_Clouds_arr[iCloud]['indEnd']
-        meanLWP    = np.nanmedian(LWP_ICON[iTimeStart:iTimeEnd])
-        stdLWP     = np.nanstd(LWP_ICON[iTimeStart:iTimeEnd])
-        stdCB      = np.nanstd(CB_array_ICON[iTimeStart:iTimeEnd])
-        meanLWC    = np.nanmean(LWC[iTimeStart:iTimeEnd,:], axis=0)
-        
-        # to derive mean cloud base and cloud top, we find the max and min height where LWC mean profile is defined
-        # finding max and min height where LWC array is non null: check the number of non nan elements
-        if np.count_nonzero(~np.isnan(meanLWC)) != 0:
-            meanCB           = height_ICON[np.nanmax(np.where(~np.isnan(meanLWC)))]
-            meanCT           = height_ICON[np.nanmin(np.where(~np.isnan(meanLWC)))]
-            # calculating cloud properties 
-            HwindCloudBase   = np.nanmean(Hwind_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)])
-            WwindCloudBase   = np.nanmean(w_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)+1])
-            chordLength      = HwindCloudBase * duration.total_seconds()
-            meanheightFromCB = (height_ICON - np.repeat(meanCB, len(height_ICON)))/ \
-            (np.repeat(meanCT, len(height_ICON))- np.repeat(meanCB, len(height_ICON)))
-            MassFlux         =  WwindCloudBase * chordLength 
-        else:
-            if len(CB_array_ICON[iTimeStart:iTimeEnd]) != 0:
-                meanCB       = np.nanmin(CB_array_ICON[iTimeStart:iTimeEnd])
-                meanCT       = np.nanmax(CT_array_ICON[iTimeStart:iTimeEnd])
-                HwindCloudBase   = np.nanmean(Hwind_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)])
-                WwindCloudBase   = np.nanmean(w_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)+1])
-                chordLength      = HwindCloudBase * duration.total_seconds()
-                meanheightFromCB = (height_ICON - np.repeat(meanCB, len(height_ICON)))/ \
-                (np.repeat(meanCT, len(height_ICON))- np.repeat(meanCB, len(height_ICON)))
-                MassFlux         =  WwindCloudBase * chordLength             
-            else:
-                meanCB           = np.nan
-                meanCT           = np.nan
-                HwindCloudBase   = np.nan
-                WwindCloudBase   = np.nan
-                chordLength      = np.nan
-                meanheightFromCB = np.nan
-                MassFlux         =  np.nan                     
-
-        
-        # storing data in dictionary array, each array is a cloudy unit
+def f_calculateCloudProperties(datetime_ICON, \
+                               height_ICON, \
+                               CB_array_ICON, \
+                               CT_array_ICON, \
+                               UpdraftCB, \
+                               cloudMaturity, \
+                               LWP_ICON, \
+                               Hwind_ICON, \
+                               w_ICON, \
+                               LWC):
+    """ 
+    @ author: cacquist
+    @ date  : November 2019
+    @ goal  : this function was created to process in the same way model and obs data
+    It gets the inputs and calculates various cloud useful quantities, listed below.
+    locaql variables are called *_ICON because originally the code was developed only 
+    for icon variables, but it applies to obs and model data
+    @ INPUT : 
+        datetime_ICON: time array
+        height_ICON  : height array
+        CB_array_ICON: clodu base time serie
+        CT_array_ICON: cloud top time serie
+        UpdraftCB    : updraft velocity at cloud base time serie
+        LWP_ICON     : LWP time serie
+        Hwind_ICON   : Horizontal wind matrix (time, height)
+        w_ICON       : vertical wind matrix (time, height)
+        LWC          : liquid water content / Qc matrix (time, height)
+    @ OUTPUT: 
+        one dictionary for each cloud unit. Each dictionary contains:
         dictProp = {'timeStart':timeStart, 
                     'indStart':indStart, 
                     'timeEnd':timeEnd, 
@@ -2151,6 +2230,126 @@ def f_calculateCloudProperties(datetime_ICON, height_ICON, CB_array_ICON, CT_arr
                     'MassFlux':MassFlux, 
                     'duration':duration, 
                     'chordLength':chordLength }
+    """
+    LWC[LWC == 0]   = np.nan   # setting to nans null values for better averaging
+    cloudStart      = 0
+    Dict_Clouds_arr = []
+    
+    # assigning starting and ending time of cloudy intervals considered continuous clouds
+    for itime in range(len(datetime_ICON)):
+        
+        if (np.isnan(CB_array_ICON[itime]) == False) * (cloudStart == 0): #cb found, cloud not started yet
+            cloudStart = 1
+            timeStart  = datetime_ICON[itime]
+            indStart   = itime
+        # if cb found and cloudstart =1, loop does not do anything: this corresponds to the cloudy part
+        if (np.isnan(CB_array_ICON[itime]) == True) * (cloudStart == 1): # se Cb not found, \
+            #and cloudstart =1 (comes from a cloud), then it saves the previous time step as timeEnd \
+            # and puts to zero the cloud flag again, ready for a new cloud. Saves time indeces and values in the dictionary
+            # and sets timestart and end to nans
+            #print('sono qua')
+            timeEnd    = datetime_ICON[itime-1]
+            indEnd     = itime-1
+            cloudStart = 0
+            dict_cloud = {'timeStart':timeStart, 'indStart':indStart, 'timeEnd':timeEnd, 'indEnd':indEnd}
+            Dict_Clouds_arr.append(dict_cloud)
+            timeStart  = np.nan
+            timeEnd    = np.nan
+            
+    # filtering LWC profiles below CB and above cloud top to nans
+    for itime in range(len(datetime_ICON)):
+        if ((~np.isnan(CB_array_ICON[itime])) or (~np.isnan(CT_array_ICON[itime]))): 
+            #fig, ax          = plt.subplots(figsize=(4,4))
+            #plt.plot(height_ICON, LWC[itime,:], label='before', color='red')
+            LWC_prof_DF              = pd.Series(LWC[itime,:], index=height_ICON)
+            mask_CB                  = (LWC_prof_DF.index < CB_array_ICON[itime]) 
+            LWC_prof_DF.loc[mask_CB] = np.nan
+            mask_CT                  = (LWC_prof_DF.index > CT_array_ICON[itime])
+            LWC_prof_DF.loc[mask_CT] = np.nan
+            LWC[itime,:]             = LWC_prof_DF.values
+            #plt.plot(height_ICON, LWC[itime,:], label='after', color='blue', linestyle=':')
+            #plt.axvline(x=CB_array_ICON[itime])
+            #plt.axvline(x=CT_array_ICON[itime])
+            #plt.xlim(0., 6000.)
+            #plt.savefig('/work/cacquist/HDCP2_S2/statistics/debug/'+str(itime))
+        else:
+            LWC[itime,:]             = np.repeat(np.nan, len(height_ICON))
+    
+
+    # calculating cloud duration, velocity below cloud base, mean cloud base height,\
+    # cloud chord lenght and corresponding mass flux as defined in (Lareau et al, 2018., JAS)
+    DictCloudPropArr = []
+    for iCloud in range(len(Dict_Clouds_arr)):
+        
+        timeStart  = Dict_Clouds_arr[iCloud]['timeStart']
+        timeEnd    = Dict_Clouds_arr[iCloud]['timeEnd']
+        duration   = timeEnd - timeStart
+        
+        # calculating corresponding mean LWP, std LWP, mean CB height, 
+        iTimeStart         = Dict_Clouds_arr[iCloud]['indStart']
+        iTimeEnd           = Dict_Clouds_arr[iCloud]['indEnd']
+        meanLWP            = np.nanmedian(LWP_ICON[iTimeStart:iTimeEnd])
+        stdLWP             = np.nanstd(LWP_ICON[iTimeStart:iTimeEnd])
+        stdCB              = np.nanstd(CB_array_ICON[iTimeStart:iTimeEnd])
+        meanLWC            = np.nanmean(LWC[iTimeStart:iTimeEnd,:], axis=0)
+        meanUpdraftCBspeed = np.nanmedian(UpdraftCB[iTimeStart:iTimeEnd])
+        stdUpdraftCBspeed  = np.nanstd(UpdraftCB[iTimeStart:iTimeEnd])
+       
+        
+        # finding max and min height where LWC array is non null: check the number of non nan elements
+        if (np.count_nonzero(~np.isnan(meanLWC)) != 0):
+            meanCB           = height_ICON[np.nanmax(np.where(~np.isnan(meanLWC)))]
+            meanCT           = height_ICON[np.nanmin(np.where(~np.isnan(meanLWC)))]
+            # calculating cloud properties 
+            HwindCloudBase   = np.nanmean(Hwind_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)])
+            WwindCloudBase   = np.nanmean(w_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)+1])
+            chordLength      = HwindCloudBase * duration.total_seconds()
+            meanheightFromCB = (height_ICON - np.repeat(meanCB, len(height_ICON)))/ \
+            (np.repeat(meanCT, len(height_ICON))- np.repeat(meanCB, len(height_ICON)))
+            MassFlux         = WwindCloudBase * chordLength 
+            cloudThickness   = meanCT - meanCB
+        else:
+            if (len(CB_array_ICON[iTimeStart:iTimeEnd]) != 0):
+                meanCB           = np.nanmin(CB_array_ICON[iTimeStart:iTimeEnd])
+                meanCT           = np.nanmax(CT_array_ICON[iTimeStart:iTimeEnd])
+                HwindCloudBase   = np.nanmean(Hwind_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)])
+                WwindCloudBase   = np.nanmean(w_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)+1])
+                chordLength      = HwindCloudBase * duration.total_seconds()
+                meanheightFromCB = (height_ICON - np.repeat(meanCB, len(height_ICON)))/ \
+                (np.repeat(meanCT, len(height_ICON))- np.repeat(meanCB, len(height_ICON)))
+                MassFlux         =  WwindCloudBase * chordLength
+                cloudThickness   = meanCT - meanCB
+
+            else:
+                meanCB           = np.nan
+                meanCT           = np.nan
+                HwindCloudBase   = np.nan
+                WwindCloudBase   = np.nan
+                chordLength      = np.nan
+                meanheightFromCB = np.repeat(np.nan, len(height_ICON))
+                MassFlux         = np.nan
+                cloudThickness   = np.nan
+
+        # storing data in dictionary array, each array is a cloudy unit
+        dictProp = {'timeStart':timeStart, 
+                    'indStart':indStart, 
+                    'timeEnd':timeEnd, 
+                    'indEnd':indEnd, 
+                    'meanLWP':meanLWP, 
+                    'meanLWC':meanLWC, 
+                    'meanheightFromCB':meanheightFromCB,
+                    'meanCT':meanCT,
+                    'stdLWP':stdLWP,
+                    'meanCB':meanCB, 
+                    'stdCB':stdCB,
+                    'WwindCB':WwindCloudBase, 
+                    'MassFlux':MassFlux, 
+                    'duration':duration, 
+                    'chordLength':chordLength, 
+                    'cloudThickness':cloudThickness,
+                    'meanUpdraftSpeedCB':meanUpdraftCBspeed,
+                    'stdUpdraftSpeedCB':stdUpdraftCBspeed,
+                    }
         DictCloudPropArr.append(dictProp)
         
     return(DictCloudPropArr)
@@ -2490,12 +2689,13 @@ def f_plotVarianceWSingleDays(date,varWmean_obs,varWmean_mod, varWstd_obs, \
 
 # finding how many radiosondes are launched during the selected day:
 def f_reshapeRadiosondes(new_dict):
-    from myFunctions import f_convertPressureToHeight
+    #from myFunctions import f_convertPressureToHeight
          
          
     P_radios_obs       = []
     T_radios_obs       = []
     theta_v_radios_obs = [] 
+    RH_radios_obs      = []
     height_radios_obs  = []
     time_radios_obs    = []
     lengthRadiosonde   = []
@@ -2510,6 +2710,7 @@ def f_reshapeRadiosondes(new_dict):
         P_radios_obs.append(new_dict[0][indSoundings]['P']/10.)
         T_radios_obs.append(new_dict[0][indSoundings]['T'])
         theta_v_radios_obs.append(new_dict[0][indSoundings]['theta_v'])
+        RH_radios_obs.append(new_dict[0][indSoundings]['RH'])
         #height_radios_obs.append(f_convertPressureToHeight(new_dict[0][indSoundings]['P']/10.,new_dict[0][indSoundings]['T']))
         height_radios_obs.append(new_dict[0][indSoundings]['height'])
         time_radios_obs.append(new_dict[0][indSoundings]['time'])
@@ -2524,6 +2725,8 @@ def f_reshapeRadiosondes(new_dict):
     P_resized          = []
     T_resized          = []
     theta_v_resized    = []
+    T_resized          = []
+    RH_resized         = []
     height_resized     = []
     index_min          = np.argmin(lengthRadiosonde)
     lenghtMin          = lengthRadiosonde[index_min]
@@ -2533,10 +2736,12 @@ def f_reshapeRadiosondes(new_dict):
             P_resized.append(P_radios_obs[indSoundings])
             T_resized.append(T_radios_obs[indSoundings])
             theta_v_resized.append(theta_v_radios_obs[indSoundings])
+            RH_resized.append(RH_radios_obs[indSoundings])
             height_resized.append(height_radios_obs[indSoundings])
         else:
             P_resized.append(P_radios_obs[indSoundings][0:lenghtMin])
             T_resized.append(T_radios_obs[indSoundings][0:lenghtMin])
+            RH_resized.append(RH_radios_obs[indSoundings][0:lenghtMin])
             theta_v_resized.append(theta_v_radios_obs[indSoundings][0:lenghtMin])        
             height_resized.append(height_radios_obs[indSoundings][0:lenghtMin])                
 
@@ -2544,12 +2749,14 @@ def f_reshapeRadiosondes(new_dict):
     # building matrices
     P_radiosonde_obs       = np.reshape(P_resized, (lenghtMin, Nsoundings))
     T_radiosonde_obs       = np.reshape(T_resized, (lenghtMin, Nsoundings))
+    RH_radiosonde_obs      = np.reshape(RH_resized, (lenghtMin, Nsoundings))
     theta_v_radiosonde_obs = np.reshape(theta_v_resized, (lenghtMin, Nsoundings))
     height_radiosonde_obs  = np.reshape(height_resized, (lenghtMin, Nsoundings))
 
          
     dict_radios = {'P':P_radiosonde_obs,
-                   'T':T_radiosonde_obs, 
+                   'T':T_radiosonde_obs,
+                   'RH':RH_radiosonde_obs,
                    'theta_v':theta_v_radiosonde_obs,
                    'height':height_radiosonde_obs, 
                    'time':time_radios_obs, 
@@ -2573,16 +2780,21 @@ piling all hours together, independently of the day.
 each element of the list is a dictionary of an hour """
 def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
                                        theta_v_radiosondes,\
+                                       T_radiosondes, \
+                                       rh_radiosObs, \
                                        height_radiosondes, \
                                        lcl_radiosondes, \
                                        lts_radiosondes, \
                                        pblHeight_radiosondes, \
                                        theta_v_mod, \
+                                       T_mod, \
+                                       rh_mod, \
                                        time_mod, \
                                        height_mod, \
                                        lcl_mod, \
                                        lts_mod, \
                                        pblHeight_mod):
+
     theta_v_dict_obs_mod_arr = []
     # time_radiosondes is a list: every element of the list corresponds to a day, 
     # and for every dat there is a different number of radiosonde launched.
@@ -2605,8 +2817,12 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
             lts_rad            = lts_radiosondes[indDay][indRadDay]
             pblHeight_rad      = pblHeight_radiosondes[indDay][indRadDay]
             theta_v_rad        = theta_v_radiosondes[indDay][:,indRadDay]
+            T_rad_day          = T_radiosondes[indDay][:,indRadDay]
+            rh_rad_day         = rh_radiosObs[indDay][:,indRadDay]
             height_rad         = height_radiosondes[indDay][:,indRadDay]
             theta_v_day        = theta_v_mod[indDay][:,:]
+            T_mod_day          = T_mod[indDay][:,:]
+            rh_mod_day         = rh_mod[indDay][:,:]
             time_day           = time_mod[indDay][:]
             lcl_mod_day        = lcl_mod[indDay][:]
             lts_mod_day        = lts_mod[indDay][:]
@@ -2637,6 +2853,8 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
             
             # defining pandas dataframes 
             thetaV_DF            = pd.DataFrame(theta_v_day, index=time_day, columns=height_mod)
+            T_mod_DF             = pd.DataFrame(T_mod_day, index=time_day, columns=height_mod)
+            RH_mod_DF            = pd.DataFrame(rh_mod_day, index=time_day, columns=height_mod)
             lcl_mod_DF           = pd.DataFrame(lcl_mod_day, index=time_day)
             lts_mod_DF           = pd.DataFrame(lts_mod_day, index=time_day)
             pblHeight_mod_DF     = pd.DataFrame(pblHeight_mod_day, index=time_day)
@@ -2645,6 +2863,14 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
             field_sliced_t       = thetaV_DF.loc[(thetaV_DF.index < hourSup) * (thetaV_DF.index >= hourInf),:]
             theta_v_mod_mean     = field_sliced_t.mean(axis=0, skipna=True)
             theta_v_mod_std      = field_sliced_t.std(axis=0, skipna=True)
+            
+            field_sliced_T_mod   = T_mod_DF.loc[(T_mod_DF.index < hourSup) * (T_mod_DF.index >= hourInf),:]
+            T_mod_mean           = field_sliced_T_mod.mean(axis=0, skipna=True)
+            T_mod_std            = field_sliced_T_mod.std(axis=0, skipna=True)
+            
+            field_sliced_RH_mod  = RH_mod_DF.loc[(RH_mod_DF.index < hourSup) * (RH_mod_DF.index >= hourInf),:]
+            RH_mod_mean          = field_sliced_RH_mod.mean(axis=0, skipna=True)
+            RH_mod_std           = field_sliced_RH_mod.std(axis=0, skipna=True)
             
             lcl_slice            = lcl_mod_DF.loc[(lcl_mod_DF.index < hourSup) * (lcl_mod_DF.index >= hourInf)]
             lcl_mod_mean         = lcl_slice.mean(skipna=True)
@@ -2659,9 +2885,15 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
             pblHeight_mod_std    = pblHeight_slice.std(skipna=True)
             
             dict_theta = {'theta_v_radios':theta_v_rad, 
+                          'T_radios':T_rad_day,
+                          'RH_radios':rh_rad_day,
                           'height_rad':height_rad,
                           'theta_v_mod_mean':theta_v_mod_mean, 
                           'theta_v_mod_std':theta_v_mod_std,
+                          'T_mod_mean':T_mod_mean, 
+                          'T_mod_std':T_mod_std,
+                          'RH_mod_mean':RH_mod_mean, 
+                          'rh_mod_std':RH_mod_std, 
                           'date':radioSondeSelected,
                           'lcl_mod_mean':lcl_mod_mean,
                           'lcl_mod_std':lcl_mod_std,
@@ -2725,17 +2957,25 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
             # defining matrices where to store all profiles collected for the hour on which the loop is running
             # and the matrices where to calculate the mean profiles for the model data corresponding to the 
             # given hour. All matrices are filled with nans
-            MatrixProfiles_radios     = np.zeros((np.max(lenghtProf_radios), Nprofiles))
-            MatrixProfiles_mod        = np.zeros((np.max(lenghtProf_mod), Nprofiles))
-            MatrixHeight_radios       = np.zeros((np.max(lenghtProf_radios), Nprofiles))
-            arr_lcl_hour_radios       = np.zeros(Nprofiles)
-            arr_lts_hour_radios       = np.zeros(Nprofiles)
-            arr_pblHeight_hour_radios = np.zeros(Nprofiles)
-            arr_lcl_hour_mod          = np.zeros(Nprofiles)
-            arr_lts_hour_mod          = np.zeros(Nprofiles)
-            arr_pblHeight_mod         = np.zeros(Nprofiles)
+            MatrixProfiles_radios        = np.zeros((np.max(lenghtProf_radios), Nprofiles))
+            MatrixProfiles_mod           = np.zeros((np.max(lenghtProf_mod), Nprofiles))
+            MatrixProfiles_T_radios      = np.zeros((np.max(lenghtProf_radios), Nprofiles))
+            MatrixProfiles_T_mod         = np.zeros((np.max(lenghtProf_mod), Nprofiles))
+            MatrixProfiles_RH_radios     = np.zeros((np.max(lenghtProf_radios), Nprofiles))
+            MatrixProfiles_RH_mod        = np.zeros((np.max(lenghtProf_mod), Nprofiles))
+            MatrixHeight_radios          = np.zeros((np.max(lenghtProf_radios), Nprofiles))
+            arr_lcl_hour_radios          = np.zeros(Nprofiles)
+            arr_lts_hour_radios          = np.zeros(Nprofiles)
+            arr_pblHeight_hour_radios    = np.zeros(Nprofiles)
+            arr_lcl_hour_mod             = np.zeros(Nprofiles)
+            arr_lts_hour_mod             = np.zeros(Nprofiles)
+            arr_pblHeight_mod            = np.zeros(Nprofiles)
             MatrixProfiles_radios.fill(np.nan) 
             MatrixProfiles_mod.fill(np.nan)
+            MatrixProfiles_RH_radios.fill(np.nan) 
+            MatrixProfiles_RH_mod.fill(np.nan)
+            MatrixProfiles_T_radios.fill(np.nan) 
+            MatrixProfiles_T_mod.fill(np.nan)            
             MatrixHeight_radios.fill(np.nan)
             arr_lcl_hour_radios.fill(np.nan)
             arr_lts_hour_radios.fill(np.nan)
@@ -2752,10 +2992,20 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
                 # filling mean profiles from the model (mean calculated around that hour)
                 MatrixProfiles_mod[0:len(theta_v_dict_obs_mod_arr[iloop+k0]['theta_v_mod_mean']),iloop]\
                 = theta_v_dict_obs_mod_arr[iloop+k0]['theta_v_mod_mean']
+                MatrixProfiles_T_mod[0:len(theta_v_dict_obs_mod_arr[iloop+k0]['T_mod_mean']),iloop]\
+                = theta_v_dict_obs_mod_arr[iloop+k0]['T_mod_mean']
+                MatrixProfiles_RH_mod[0:len(theta_v_dict_obs_mod_arr[iloop+k0]['RH_mod_mean']),iloop]\
+                = theta_v_dict_obs_mod_arr[iloop+k0]['RH_mod_mean']                
+                
                 
                 # filling profiles from radiosondes
                 MatrixProfiles_radios[0:len(theta_v_dict_obs_mod_arr[iloop+k0]['theta_v_radios']),iloop]\
                 = theta_v_dict_obs_mod_arr[iloop+k0]['theta_v_radios']
+                MatrixProfiles_T_radios[0:len(theta_v_dict_obs_mod_arr[iloop+k0]['T_radios']),iloop]\
+                = theta_v_dict_obs_mod_arr[iloop+k0]['T_radios']
+                MatrixProfiles_RH_radios[0:len(theta_v_dict_obs_mod_arr[iloop+k0]['RH_radios']),iloop]\
+                = theta_v_dict_obs_mod_arr[iloop+k0]['RH_radios']                
+                
                 MatrixHeight_radios[0:len(theta_v_dict_obs_mod_arr[iloop+k0]['height_rad']),iloop]\
                 = theta_v_dict_obs_mod_arr[iloop+k0]['height_rad'] 
                 
@@ -2768,20 +3018,32 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
                 arr_lcl_hour_mod[iloop]          = theta_v_dict_obs_mod_arr[iloop+k0]['lcl_mod_mean']
                 arr_lts_hour_mod[iloop]          = theta_v_dict_obs_mod_arr[iloop+k0]['lts_mod_mean']
                 arr_pblHeight_mod[iloop]         = theta_v_dict_obs_mod_arr[iloop+k0]['pblHeight_mod_mean']
-                print('lts obs', arr_lts_hour_radios)
-                print('lts mod', arr_lts_hour_mod)
+                #print('lts obs', arr_lts_hour_radios)
+                #print('lts mod', arr_lts_hour_mod)
+            
             # incrementing Ko of the number of profiles of the given hour to be ready to process the next hour
             k0 = k0+Nprofiles
         
+            # calculating mean profiles of the model profiles collected around radiosondes
+            meanProfile_mod    = np.nanmean(MatrixProfiles_mod, axis=1)
+            stdProfile_mod     = np.nanstd(MatrixProfiles_mod, axis=1)
+            meanProfile_T_mod  = np.nanmean(MatrixProfiles_T_mod, axis=1)
+            stdProfile_T_mod   = np.nanstd(MatrixProfiles_T_mod, axis=1)
+            meanProfile_RH_mod = np.nanmean(MatrixProfiles_RH_mod, axis=1)
+            stdProfile_RH_mod  = np.nanstd(MatrixProfiles_RH_mod, axis=1)
             
-            meanProfile_mod = np.nanmean(MatrixProfiles_mod, axis=1)
-            stdProfile_mod  = np.nanstd(MatrixProfiles_mod, axis=1)        
             outDict         = {'hour':hourSel, \
                                'Nprofiles':Nprofiles, \
                                'MatrixProfile_radios':MatrixProfiles_radios, \
+                               'MatrixProfile_T_radios':MatrixProfiles_T_radios, \
+                               'MatrixProfile_RH_radios':MatrixProfiles_RH_radios, \
                                'MatrixHeight_radios':MatrixHeight_radios, \
                                'meanProfile_mod':meanProfile_mod, \
                                'stdProfileMod':stdProfile_mod, \
+                               'meanProfile_T_mod':meanProfile_T_mod, \
+                               'stdProfile_T_Mod':stdProfile_T_mod, \
+                               'meanProfile_RH_mod':meanProfile_RH_mod, \
+                               'stdProfile_RH_Mod':stdProfile_RH_mod, \
                                'lcl_rad_hour':arr_lcl_hour_radios, \
                                'lcl_mod_hour':arr_lcl_hour_mod, \
                                'lts_rad_hour':arr_lts_hour_radios, \
@@ -2801,18 +3063,34 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
     NgridInterp                   = len(gridHeight)
     MatrixHourMeanProfileThetaRad = np.zeros((NgridInterp, len(listHourDict)))
     MatrixHourStdProfileThetaRad  = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourMeanProfileTRad = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourStdProfileTRad  = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourMeanProfileRHRad = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourStdProfileRHRad  = np.zeros((NgridInterp, len(listHourDict)))
     MatrixHourMeanProfileThetaRad.fill(np.nan)
     MatrixHourStdProfileThetaRad.fill(np.nan)
+    MatrixHourMeanProfileTRad.fill(np.nan)
+    MatrixHourStdProfileTRad.fill(np.nan)
+    MatrixHourMeanProfileRHRad.fill(np.nan)
+    MatrixHourStdProfileRHRad.fill(np.nan)
+    
     
     # loop on the hours: for each hour, we read a matrix of height and thetav from radiosondes
     for indHour in range(len(listHourDict)):
         MatrixHeightHour = listHourDict[indHour]['MatrixHeight_radios']
         MatrixHourTheta  = listHourDict[indHour]['MatrixProfile_radios']
+        MatrixHour_T     = listHourDict[indHour]['MatrixProfile_T_radios']
+        MatrixHour_RH    = listHourDict[indHour]['MatrixProfile_RH_radios']
+        
         sizeMatrix       = np.shape(MatrixHourTheta)
         Nradiosondes     = sizeMatrix[1]
         NheightsRad      = sizeMatrix[0]
         MeanProfileTheta = np.zeros((NgridInterp, Nradiosondes))
         MeanProfileTheta.fill(np.nan)
+        MeanProfileT     = np.zeros((NgridInterp, Nradiosondes))
+        MeanProfileT.fill(np.nan)
+        MeanProfileRH    = np.zeros((NgridInterp, Nradiosondes))
+        MeanProfileRH.fill(np.nan)
         
         # we loop on heights in radiosondes and we average for each model 
         # heigth grid box, the values of theta foudn in the radiosonde profiles
@@ -2825,6 +3103,10 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
                                     (MatrixHeightHour[:,indRadiosonde] < Hmax))
                 #print(indFound)
                 MeanProfileTheta[indHeight,indRadiosonde] = np.nanmean(MatrixHourTheta[indFound,indRadiosonde])
+                MeanProfileT[indHeight,indRadiosonde] = np.nanmean(MatrixHour_T[indFound,indRadiosonde])
+                MeanProfileRH[indHeight,indRadiosonde] = np.nanmean(MatrixHour_RH[indFound,indRadiosonde])
+                
+                
                 #print(MatrixHeightHour[indFound,indRadiosonde])
                 #print(MatrixHeightHour[:,indRadiosonde])
             # calculating mean profile of theta V for observations
@@ -2832,5 +3114,11 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
         #if hourSel == K0:
         MatrixHourMeanProfileThetaRad[:, indHour] = np.nanmean(MeanProfileTheta, axis=1)
         MatrixHourStdProfileThetaRad[:, indHour]  = np.nanstd(MeanProfileTheta, axis=1)
+        MatrixHourMeanProfileTRad[:, indHour]     = np.nanmean(MeanProfileT, axis=1)
+        MatrixHourStdProfileTRad[:, indHour]      = np.nanstd(MeanProfileT, axis=1)
+        MatrixHourMeanProfileRHRad[:, indHour]    = np.nanmean(MeanProfileRH, axis=1)
+        MatrixHourStdProfileRHRad[:, indHour]     = np.nanstd(MeanProfileRH, axis=1)
         
-    return(MatrixHourMeanProfileThetaRad, MatrixHourStdProfileThetaRad, listHourDict)
+    return(MatrixHourMeanProfileThetaRad, MatrixHourStdProfileThetaRad, listHourDict, \
+           MatrixHourMeanProfileTRad, MatrixHourStdProfileTRad, MatrixHourMeanProfileRHRad, \
+           MatrixHourStdProfileRHRad)
