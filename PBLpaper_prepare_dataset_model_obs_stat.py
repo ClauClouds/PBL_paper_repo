@@ -46,9 +46,8 @@ try:
 except ImportError:  # python 3.x
     import pickle
     
-    
-from myFunctions2 import f_readingTowerData
 from f_processModelOutput import f_processModelOutput
+from myFunctions2 import f_readingTowerData
 from myFunctions import f_resamplingfield
 from myFunctions2 import hourDecimal_to_datetime
 from myFunctions import f_resampling_twoD_Field
@@ -70,7 +69,8 @@ timeSpinOver  = 0.0      # ending time of the spin up of the model (corresponds 
 intTime       = 400.     # time interval over which calculate cloud fraction and coupling parameters [seconds] corresponding to minutes with a resolution of model output of 9 sec (5 min = 50), (15 min = 150)
 QcThreshold   = 10**(-7) # threshold in Qc to identify liquid cloud presence
 QiThreshold   = 10**(-7) # threshold in Qc to identify ice cloud presence   
-SigmaWThres   = 0.2      # threshold in the variance of the vertical velocity, used as a threshold for identifying turbulent regions.
+SigmaWThres   = 0.4      # threshold in the standard deviation of the vertical velocity, used as a threshold for identifying turbulent regions
+                         # the value is taken from the Schween et al, 2014 amt paper, 
 nTimeMean     = 200      # number of time stamps to be collected to average over 30 min=1800 s
 timeStep      = 33       # time step for running mean
 timewindow    = 200      # time window for calculating running mean of variance corresponding to 30 min with 9 sec resolution (200*9=1800 sec = 30 min)
@@ -80,14 +80,16 @@ runningWindow = 200*4    # number of time stamps corresponding to 30 minutes run
 
 # ----- creating dictionary of input parameters to process icon lem model output
 modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'QcThresholdVar':QcThreshold, \
-                  'QiThresholdVar':QiThreshold, 'SigmaWThresVar':SigmaWThres, 'nTimeMeanVar':nTimeMean, \
+                  'QiThresholdVar':QiThreshold, 'SigmaWThresStd':SigmaWThres, 'nTimeMeanVar':nTimeMean, \
                   'timeStepVar':timeStep, 'timewindowVar':timewindow, 'gradWindThrVar':gradWindThr, \
-                  'timeWindowSkVar':timeWindowSk, 'runningWindowVar':runningWindow }
+                  'timeWindowSkVar':timeWindowSk, 'runningWindowVar':runningWindow}
 
 
 # ----- define list of days to be processed 
-dayList           = ['20130503','20130504', '20130505','20130506']
-#,'20130509','20130510',
+dayList           = ['20130502']
+#dayList           = ['20130424','20130425', '20130427','20130429','20130501',\
+#                     '20130502','20130503','20130504', '20130505','20130506',\
+#                     '20130509','20130510','20130518']
 #    ,'20130424', '20130425', '20130427','20130429','20130501','20130502', '20130518'
 Ndays             = len(dayList)
 
@@ -99,24 +101,25 @@ Ndays             = len(dayList)
 
 
 # ----- defining input directories for data
-path_tower        = '/data/hatpro/jue/hdcp2/meteo_data/'#'/data/TR32/D2/data/juelich/met_mast/'
-path_cloudnet_cat = '/data/hatpro/jue/cloudnet/juelich/processed/categorize/2013/'
-path_icon         = '/data/inscape/icon/experiments/juelich/meteo-4nest/'
-path_bl_class     = '/data/hatpro/jue/cloudnet/juelich/products/bl-classification/2013/'
-path_mwr_joyce    = '/data/hatpro/hps/data/level2/'
-path_mwr_kit      = '/data/hatpro/hpk/data/level2/'
-path_mwr_lacross  = '/data/hatpro/hpl/data/level2/'
-path_gps          = '/data/hatpro/jue/data/gps/'
-path_radiation    = '/data/data_hatpro/jue/hdcp2/radiation_hdcp2/'
-path_radiosondes  = '/home/juelich/rs_hope/KIT/'
-path_LH_SH_fluxes = '/work/cacquist/HDCP2_S2/statistics/dataset_obs_model/'
-path_LWC          = '/data/hatpro/jue/cloudnet/juelich/products/lwc-scaled-adiabatic/'
-patch             = 'patch003' # patch002, patch003, patch004
-domSel            = 'DOM03'
-pathOut           = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/'
+path_tower          = '/data/hatpro/jue/hdcp2/meteo_data/'#'/data/TR32/D2/data/juelich/met_mast/'
+path_cloudnet_cat   = '/data/hatpro/jue/cloudnet/juelich/processed/categorize/2013/'
+path_icon           = '/data/inscape/icon/experiments/juelich/meteo-4nest/'
+path_bl_class       = '/data/hatpro/jue/cloudnet/juelich/products/bl-classification/2013/'
+path_windLidarCeilo = '/data/TR32/D2/data/wind_lidar/data/nc/'
+path_mwr_joyce      = '/data/hatpro/hps/data/level2/'
+path_mwr_kit        = '/data/hatpro/hpk/data/level2/'
+path_mwr_lacross    = '/data/hatpro/hpl/data/level2/'
+path_gps            = '/data/hatpro/jue/data/gps/'
+path_radiation      = '/data/data_hatpro/jue/hdcp2/radiation_hdcp2/'
+path_radiosondes    = '/home/juelich/rs_hope/KIT/'
+path_LH_SH_fluxes   = '/work/cacquist/HDCP2_S2/statistics/dataset_obs_model/'
+path_LWC            = '/data/hatpro/jue/cloudnet/juelich/products/lwc-scaled-adiabatic/'
+patch               = 'patch003' # patch002, patch003, patch004
+domSel              = 'DOM03'
+pathOut             = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/'
 # ----- defining data flags
 dataFlagArr       = np.repeat(1, 14)
-dataFlagLabel     = ['tower', 'cloudnetClass', 'PBLclass', 'MWR_joyce','radiosoundings', 'LWC_Cloudnet_prod']
+dataFlagLabel     = ['tower', 'cloudnetClass', 'PBLclass', 'MWR_joyce','radiosoundings', 'LWC_Cloudnet_prod', 'windLidar_ceilo']
 
 
 # ----- loop on the number of days
@@ -200,6 +203,18 @@ for iDay in range(Ndays):
     # -----------------------------------------------------------------------------------   
     pathIn   = path_radiosondes+yy+mm+dd+'/'
     fileList = glob.glob(pathIn+'*.txt')
+    
+    for indRemove in range(len(fileList)):
+        if fileList[indRemove] == 'KIT_HOPE_2013042411.txt':
+            del fileList[indRemove]
+        if fileList[indRemove] == 'KIT_HOPE_2013042509.txt':
+            del fileList[indRemove]            
+        if fileList[indRemove] == 'KIT_HOPE_2013042511.txt':
+            del fileList[indRemove]
+        if fileList[indRemove] == 'KIT_HOPE_2013050515.txt':
+            del fileList[indRemove]
+        if fileList[indRemove] == 'KIT_HOPE_2013042411.txt':
+            del fileList[indRemove]
     
     if os.listdir(pathIn):    
         # folder full, process radiosondes that are in
@@ -307,29 +322,51 @@ for iDay in range(Ndays):
         beta                  = OBS_PBL_data.variables['beta'][:].copy()
         eps                   = OBS_PBL_data.variables['eps'][:].copy()
         shear                 = OBS_PBL_data.variables['shear'][:].copy()
-        skew                  = OBS_PBL_data.variables['skew'][:].copy()
-        w                     = OBS_PBL_data.variables['velo'][:].copy()
         Hwind                 = OBS_PBL_data.variables['speed'][:].copy()
         wDir                  = OBS_PBL_data.variables['dir'][:].copy()
 
+
+    # -----------------------------------------------------------------------------------
+    # ---- wind lidar/ceilometer data
+    # -----------------------------------------------------------------------------------
+    pathIn   = path_windLidarCeilo+'/'+yy+'/'+mm+'/'+dd+'/'
+    filename = 'sups_joy_dlidST00_l2_zmlaw_v00_'+date+'000000.nc'
+    if (os.path.isfile(pathIn+filename)):
         
+         
+        print('wind lidar/ceilometer data found: reading and resampling data')
+        dataFlagArr[6] = 1
+        WIND_CEILO_data = Dataset(pathIn+filename, mode='r')        
+    
+        beta                  = WIND_CEILO_data.variables['beta'][:].copy()
+        w                     = WIND_CEILO_data.variables['w'][:].copy()
+        sigma_w               = WIND_CEILO_data.variables['w_sdev'][:].copy()
+        w_skew                = WIND_CEILO_data.variables['w_skew'][:].copy()
+        zmlaw                 = WIND_CEILO_data.variables['zmlaw'][:].copy()
+        zmlawErr              = WIND_CEILO_data.variables['zmlaw_uncty'][:].copy()
+        datetime_Lidar        = nc4.num2date(WIND_CEILO_data.variables['time'][:], \
+                                             WIND_CEILO_data.variables['time'].units)
+        heightLidar           = WIND_CEILO_data.variables['height'][:].copy()
         
     # ---- resampling cloudnet observations ( used only for surface values, so no resampling needed in height)
-    print('resampling PBL variables on ICON time and height resolution')
-    w_obs_res        = f_resampling_twoD_Field(w, datetime_PBL, \
-                                              height_PBL_class, ICON_DF, ICON_DF_T)
+    print('resampling PBL variables and lidar on ICON time and height resolution')
+    w_obs_res        = f_resampling_twoD_Field(w, datetime_Lidar, \
+                                              heightLidar, ICON_DF, ICON_DF_T)
     Hwind_obs_res    = f_resampling_twoD_Field(Hwind, datetime_dwl, \
                                              height_PBL_class, ICON_DF, ICON_DF_T)
-    skew_obs_res     = f_resampling_twoD_Field(skew, datetime_PBL, \
-                                             height_PBL_class, ICON_DF, ICON_DF_T)    
+    skew_obs_res     = f_resampling_twoD_Field(w_skew, datetime_Lidar, \
+                                             heightLidar, ICON_DF, ICON_DF_T)    
     PBLclass_obs_res = f_resampling_twoD_Field(PBLclass, datetime_PBL, \
                                               height_PBL_class, ICON_DF, ICON_DF_T)     
     shear_obs_res    = f_resampling_twoD_Field(shear, datetime_PBL, \
                                               height_PBL_class, ICON_DF, ICON_DF_T)     
-    wDir_obs_res    = f_resampling_twoD_Field(wDir, datetime_dwl, \
+    wDir_obs_res     = f_resampling_twoD_Field(wDir, datetime_dwl, \
                                               height_PBL_class, ICON_DF, ICON_DF_T)  
-    
-    print('PBL variables resampled: w, Hwind, PBLclass, skewnessW, shear, wdir')
+    zmlaw_obs_res    = f_resamplingfield(zmlaw, datetime_Lidar, ICON_DF)
+    zmlawErr_obs_res = f_resamplingfield(zmlawErr, datetime_Lidar, ICON_DF)
+    sigma_w_obs_res  = f_resampling_twoD_Field(sigma_w, datetime_Lidar, \
+                                             heightLidar, ICON_DF, ICON_DF_T)
+    print('PBL variables resampled: w, sigmaw, Hwind, PBLclass, skewnessW, shear, wdir, mixing layer height')
 
     
     # -----------------------------------------------------------------------------------
@@ -378,6 +415,8 @@ for iDay in range(Ndays):
             'PBLclassObs':PBLclass_obs_res.values.transpose(),
             'shear':shear_obs_res.values.transpose(),
             'windDirection':wDir_obs_res.values.transpose(),
+            'mixingLayerHeight_w_obs': zmlaw_obs_res.values.transpose(),
+            'mixingLayerHeightErr_w_obs': zmlawErr_obs_res.values.transpose(),
             'absoluteHumidity':qProf_obs_res.values.transpose(),
             'temperature':tProf_obs_res.values.transpose(),
             'IWV_mwr':IWV_obs_res, 
@@ -386,19 +425,7 @@ for iDay in range(Ndays):
             'height':height_ICON
             }
     
-    # -----------------------------------------------------------------------------------
-    # ---- reading and storing additional icon lem variables
-    # -----------------------------------------------------------------------------------    
-    IWV_iconlem       = iconLemData.groups['Temp_data'].variables['IWV'][:].copy()  # in [K]
-    LTS_iconlem       = iconLemData.groups['Temp_data'].variables['LTS'][:].copy()
-    PBLheight_iconlem = iconLemData.groups['Temp_data'].variables['PBLHeightArr'][:].copy()
-    
-    dict_iconlem_variables = {
-            'IWV_iconlem':IWV_iconlem, 
-            'LTS_iconlem':LTS_iconlem,
-            'PBLheight_iconlem':PBLheight_iconlem,
-            'datetime_iconlem':datetime_ICON,
-            }
+
     
 #%%
     
@@ -433,6 +460,10 @@ for iDay in range(Ndays):
                                                       verboseFlag, \
                                                       debuggingFlag, \
                                                       pathDebugFig)
+    if device == 'obs':
+        print('shape of meanHeight out of the function')
+        print(np.shape(cloudDict_obs['meanheightFromCB']))
+        
 #CloudInfo, time, height, LWP, LWC, Hwind, Wwind, yy, dd, mm, QiThreshold, QcThreshold, iconLemData, device, verboseFlag):
     # iconlem
     device            = 'iconlem' 
@@ -571,6 +602,23 @@ for iDay in range(Ndays):
             'LW_Err_obs':LW_obs_Err_30min.values,
             }
 #%%    
+    
+    # -----------------------------------------------------------------------------------
+    # ---- reading and storing additional icon lem variables
+    # -----------------------------------------------------------------------------------    
+    IWV_iconlem       = iconLemData.groups['Temp_data'].variables['IWV'][:].copy()  # in [K]
+    LTS_iconlem       = iconLemData.groups['Temp_data'].variables['LTS'][:].copy()
+    PBLheight_iconlem = iconLemData.groups['Temp_data'].variables['PBLHeightArr'][:].copy()
+    Tmatrix_iconlem   = iconLemData.groups['Temp_data'].variables['T'][:].copy()  # in [K]
+    
+    dict_iconlem_variables = {
+            'IWV_iconlem':IWV_iconlem, 
+            'LTS_iconlem':LTS_iconlem,
+            'PBLheight_iconlem':PBLheight_iconlem,
+            'datetime_iconlem':datetime_ICON,
+            'T_iconlem':Tmatrix_iconlem, 
+            }
+    
     # -----------------------------------------------------------------------------------
     # ---- calculating thermodynamics: mixing ratio, RH, virtual temp, virtual pot temp, ccl, lcl 
     # -----------------------------------------------------------------------------------           
@@ -588,7 +636,6 @@ for iDay in range(Ndays):
     model             = 'iconlem'
     Pmatrix_iconlem   = iconLemData.groups['Temp_data'].variables['P'][:].copy()  # in [Pa]
     Qmatrix_iconlem   = iconLemData.groups['Temp_data'].variables['q'][:].copy()  # in [kg/kg]
-    Tmatrix_iconlem   = iconLemData.groups['Temp_data'].variables['T'][:].copy()  # in [K]
     
     Thermodyn_iconlem = f_calcThermodynamics(Pmatrix_iconlem, Qmatrix_iconlem, Tmatrix_iconlem, \
                                              LTS_iconlem, datetime_ICON, height_ICON, Hsurf, model)
@@ -616,7 +663,8 @@ for iDay in range(Ndays):
     dynamics_iconlem  = f_calcDynamics(w_iconlem,u_iconlem,v_iconlem,\
                                        thetaV_iconlem,datetime_ICON,height_ICON,\
                                        timeWindow) 
-    
+ 
+
     # ----------------------------------------------------------------------------------
     # ---- writing data produced in a pickle file and compressing it
     # ---------------------------------------------------------------------------------    
