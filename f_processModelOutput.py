@@ -49,6 +49,8 @@ from myFunctions import f_calcCloudBaseTopPBLcloudsV2
 from myFunctions import f_calcCloudBaseTopPBLclouds
 from myFunctions import f_calcPblHeightTW
 from myFunctions import f_cloudmask
+from myFunctions import f_calcWindSpeed_Dir
+
 
 def f_processModelOutput(path_icon, \
                          iconFilename, \
@@ -95,6 +97,11 @@ def f_processModelOutput(path_icon, \
     print(height2[-1])
     print(height2[0])
     print(len(height2))
+    # subtracting from model height arrays the height of the ground level at JOYCE
+    # and make it comparable with the observations
+    height2 = height2 - np.repeat(Hsurf, len(height2))
+    height  = height -np.repeat(Hsurf, len(height))
+    
     
     # --- reading dimension of height and time arrays
     dimTime       = len(datetime_ICON)
@@ -334,46 +341,45 @@ def f_processModelOutput(path_icon, \
     # --- Calculation of wind shear as done for PBL  ( running mean over 30 min of sqrt(Delta U^2 + delta V^2))/delta H 
     # where variations are calculated over 5 range gates 
     # ------------------------------------------------------------------
+    windData      = f_calcWindSpeed_Dir(datetime_ICON, height2, zonalWind, merWind)
+    windSpeed     = windData['windSpeed']
+    windDirection = windData['windDirection']
     
-    # --- calculating shear of horizontal wind 
+
+# =============================================================================
+# --- calculating shear of horizontal wind 
     u_rm = np.zeros((len(datetime_ICON), len(height2)))
     v_rm = np.zeros((len(datetime_ICON), len(height2)))
-    
-    # --- defining running mean values of zonal and meridional wind
+# --- defining running mean values of zonal and meridional wind
     for indH in range(0,len(height2)):
-        zonal = pd.Series(zonalWind[:,indH])
-        mer   = pd.Series(merWind[:,indH])
-        #u_rm[:,indH] = pd.rolling_mean(zonalWind[:,indH], window=200) 
-        #v_rm[:,indH] = pd.rolling_mean(merWind[:,indH], window=200) 
-        u_rm[:,indH] = zonal.rolling(200).mean()
-        v_rm[:,indH] = mer.rolling(200).mean()
-        
-    # calculating wind shear and horizontal wind
-    Hwind_ICON = np.zeros((len(datetime_ICON), len(height2)))    
+         zonal = pd.Series(zonalWind[:,indH])
+         mer   = pd.Series(merWind[:,indH])
+         #u_rm[:,indH] = pd.rolling_mean(zonalWind[:,indH], window=200) 
+         #v_rm[:,indH] = pd.rolling_mean(merWind[:,indH], window=200) 
+         u_rm[:,indH] = zonal.rolling(200).mean()
+         v_rm[:,indH] = mer.rolling(200).mean()
+#         
+# calculating wind shear and horizontal wind
     shear_ICON = np.zeros((len(datetime_ICON), len(height2)))
     for indT in range(0,len(datetime_ICON)):
         for indH in range(0,len(height2)):
-            Hwind_ICON[indT, indH] = (np.sqrt(zonalWind[indT,indH]**2 + merWind[indT,indH]**2))
 
-            if (indH < 2.) or (indH > len(height2)-3):
-                shear_ICON[indT, indH] = 0.
-            else:
-                deltaV = (np.absolute(v_rm[indT, indH+2] - v_rm[indT, indH-2]))**2
-                deltaU = (np.absolute(u_rm[indT, indH+2] - u_rm[indT, indH-2]))**2
-                deltaH = np.absolute(height[indH+2] - height[indH-2])
-                shear_ICON[indT, indH] = (np.sqrt(deltaU + deltaV))/deltaH
+             if (indH < 2.) or (indH > len(height2)-3):
+                 shear_ICON[indT, indH] = 0.
+             else:
+                 deltaV = (np.absolute(v_rm[indT, indH+2] - v_rm[indT, indH-2]))**2
+                 deltaU = (np.absolute(u_rm[indT, indH+2] - u_rm[indT, indH-2]))**2
+                 deltaH = np.absolute(height[indH+2] - height[indH-2])
+                 shear_ICON[indT, indH] = (np.sqrt(deltaU + deltaV))/deltaH
+# =============================================================================
     if verboseFlag == 1:
-        print('horizontal wind and shear calculated')
+        print('horizontal wind speed, direction and shear calculated')
     # ------------------------------------------------------------------        
     # ----calculating boundary layer classification (version from submitted paper)
     # ------------------------------------------------------------------
     ylim        = np.repeat(3000, dimTime)     # defining array of heights up to which PBL classification is calculated
     gradWindThr = 0.01
     SigmaWThres = 0.2
-    print(np.shape(cloudMask))
-    print(np.shape(shear_ICON))
-    print(np.shape(SKmatrix))    
-    print(np.shape(varianceWmatrix))    
     outputClass = f_PBLClass(datetime_ICON, \
                              height2, \
                              gradWindThr, \
@@ -449,15 +455,17 @@ def f_processModelOutput(path_icon, \
     Pthr = 700 * 100. # Pressure level of 700 Hpa used as a reference
     # calculating height of the surface
      
-    indSurf = 149# f_closest(height,Hsurf)
+    indSurf = 146# f_closest(height,Hsurf)
     for iTime in range(dimTime):
         indP700 = f_closest(P[iTime,:],Pthr)
         LTS[iTime] = theta[iTime, indP700] - theta[iTime, indSurf]
         H700[iTime] = height[indP700]
     if verboseFlag == 1: 
         print('LTS calculated')
-        
-        
+    #print(theta[4500, indP700])
+    #print(theta[4500, indSurf])
+    #print(theta[4500, :])
+    
         
     # ------------------------------------------------------------------                
     # ---- calculating liquid potential temperature
@@ -530,6 +538,7 @@ def f_processModelOutput(path_icon, \
     varflagSurfDriven     = tempgrp.createVariable('flagSurfaceDriven', 'f4', ('dimT','dimH'))
     varvarianceW          = tempgrp.createVariable('varianceW', 'f4', ('dimT','dimH'))
     varHwind              = tempgrp.createVariable('windSpeed', 'f4', ('dimT','dimH'))
+    varWindDirection      = tempgrp.createVariable('windDirection', 'f4', ('dimT','dimH'))
     varShearHwind         = tempgrp.createVariable('shearHwind', 'f4', ('dimT','dimH'))
     varcloudMask          = tempgrp.createVariable('cloudMask', 'f4', ('dimT','dimH'))
     varthetaPot           = tempgrp.createVariable('theta', 'f4', ('dimT','dimH'))
@@ -577,7 +586,8 @@ def f_processModelOutput(path_icon, \
     varflagWindShear[:]   = outputClass[5]
     varflagSurfDriven[:]  = outputClass[6]
     varvarianceW[:,:]     = varianceWmatrix
-    varHwind[:,:]         = Hwind_ICON
+    varHwind[:,:]         = windSpeed
+    varWindDirection[:,:] = windDirection
     varShearHwind[:,:]    = shear_ICON
     varcloudMask[:,:]     = cloudMask
     varthetaPot[:,:]      = theta
