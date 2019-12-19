@@ -86,10 +86,10 @@ modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'Q
 
 
 # ----- define list of days to be processed 
-dayList           = ['20130502']
-#dayList           = ['20130424','20130425', '20130427','20130429','20130501',\
-#                     '20130502','20130503','20130504', '20130505','20130506',\
-#                     '20130509','20130510','20130518']
+#dayList           = ['20130502']
+dayList           = ['20130424','20130425', '20130427','20130429','20130501',\
+                     '20130502','20130503','20130504', '20130505','20130506',\
+                     '20130509','20130510','20130518']
 #    ,'20130424', '20130425', '20130427','20130429','20130501','20130502', '20130518'
 Ndays             = len(dayList)
 
@@ -118,8 +118,9 @@ patch               = 'patch003' # patch002, patch003, patch004
 domSel              = 'DOM03'
 pathOut             = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/'
 # ----- defining data flags
-dataFlagArr       = np.repeat(1, 14)
-dataFlagLabel     = ['tower', 'cloudnetClass', 'PBLclass', 'MWR_joyce','radiosoundings', 'LWC_Cloudnet_prod', 'windLidar_ceilo']
+dataFlagArr         = np.repeat(1, 14)
+dataFlagLabel       = ['tower', 'cloudnetClass', 'PBLclass', 'MWR_joyce','radiosoundings', \
+                     'LWC_Cloudnet_prod', 'windLidar_ceilo', 'windLidarScans']
 
 
 # ----- loop on the number of days
@@ -262,7 +263,7 @@ for iDay in range(Ndays):
 
         print('cloudnet class found: reading and resampling data')
         dataFlagArr[1] = 1
-        CLOUDNET_data = Dataset(pathIn+filename, mode='r')
+        CLOUDNET_data         = Dataset(pathIn+filename, mode='r')
     
         # ----- reading CLOUDNET data variables
         time_CLOUDNET         = CLOUDNET_data.variables['time'][:].copy()
@@ -330,7 +331,8 @@ for iDay in range(Ndays):
     # ---- wind lidar/ceilometer data
     # -----------------------------------------------------------------------------------
     pathIn   = path_windLidarCeilo+'/'+yy+'/'+mm+'/'+dd+'/'
-    filename = 'sups_joy_dlidST00_l2_zmlaw_v00_'+date+'000000.nc'
+    # filename for LH estimate based on standard deviation over 30min of vertical velocity, mean w, skewness etc.
+    filename = 'sups_joy_dlidST00_l2_zmlaw_v00_'+date+'000000.nc'  
     if (os.path.isfile(pathIn+filename)):
         
          
@@ -368,7 +370,32 @@ for iDay in range(Ndays):
                                              heightLidar, ICON_DF, ICON_DF_T)
     print('PBL variables resampled: w, sigmaw, Hwind, PBLclass, skewnessW, shear, wdir, mixing layer height')
 
-    
+    # filename for LH estimate based on standard deviation over 30min of vertical velocity, mean w, skewness etc.
+    filename = 'wind_dbs-3_'+date+'.nc'
+    if (os.path.isfile(pathIn+filename)):
+        if verboseFlag == '1':
+            print('wind lidar/ceilometer data found: reading and resampling data')
+        dataFlagArr[7] = 1
+        windLidarScan_data = Dataset(pathIn+filename, mode='r')
+        time_windScan      = windLidarScan_data.variables['time'][:].copy()
+        speed_windScan     = windLidarScan_data.variables['speed'][:].copy()
+        dir_windScan       = windLidarScan_data.variables['dir'][:].copy()
+        windVec_windScan   = windLidarScan_data.variables['wind_vec'][:].copy()
+        height_windScan    = windLidarScan_data.variables['height'][:].copy()
+        # converting time in datetime array
+        T_unix             = (time_windScan-2440587.5)*86400
+        T_units            = 'seconds since 1970-01-01 00:00:00'
+        datetime_windScan  = nc4.num2date(T_unix[:],T_units)
+        
+        # reading u/v components from the wind vector array
+        u_windScan         = windVec_windScan[0,:,:].T
+        v_windScan         = windVec_windScan[1,:,:].T
+        
+        # resampling u, v components on icon time/height grid
+        u_obs_res          = f_resampling_twoD_Field(u_windScan, datetime_windScan, \
+                                              height_windScan, ICON_DF, ICON_DF_T)
+        v_obs_res          = f_resampling_twoD_Field(v_windScan, datetime_windScan, \
+                                              height_windScan, ICON_DF, ICON_DF_T)
     # -----------------------------------------------------------------------------------
     # ---- microwave radiometer joyce
     # -----------------------------------------------------------------------------------
@@ -411,6 +438,10 @@ for iDay in range(Ndays):
             'datetime_obs':datetime_lwp_iwv_joyce,
             'verticalWind':w_obs_res.values.transpose(),
             'horizontalWind':Hwind_obs_res.values.transpose(),
+            'zonalWind':u_obs_res.values.transpose(),
+            'meridionalWind':v_obs_res.values.transpose(), 
+            'stdW':sigma_w_obs_res.values.transpose(),
+            'varianceW':(sigma_w_obs_res.values.transpose())**2,
             'skewnessW':skew_obs_res.values.transpose(),
             'PBLclassObs':PBLclass_obs_res.values.transpose(),
             'shear':shear_obs_res.values.transpose(),
@@ -561,11 +592,7 @@ for iDay in range(Ndays):
     SWobsErr   = SWobsData.variables['rsd_error'][:]
     timeSWObs  = nc4.num2date(SWobsData.variables['time'][:], SWobsData.variables['time'].units) 
 
-    print('len of surface fluxes ')
-    print(len(SHFL_30min))
-    print(len(LHFL_30min))
-    
-    
+
     # resampling obvs to icon resolution
     LWobs_res = f_resamplingfield(LWobs, timeLWObs, ICON_DF)
     SWobs_res = f_resamplingfield(SWobs, timeSWObs, ICON_DF)
@@ -606,17 +633,38 @@ for iDay in range(Ndays):
     # -----------------------------------------------------------------------------------
     # ---- reading and storing additional icon lem variables
     # -----------------------------------------------------------------------------------    
-    IWV_iconlem       = iconLemData.groups['Temp_data'].variables['IWV'][:].copy()  # in [K]
-    LTS_iconlem       = iconLemData.groups['Temp_data'].variables['LTS'][:].copy()
-    PBLheight_iconlem = iconLemData.groups['Temp_data'].variables['PBLHeightArr'][:].copy()
-    Tmatrix_iconlem   = iconLemData.groups['Temp_data'].variables['T'][:].copy()  # in [K]
+    print('reading dynamics properties for iconlem')
+    IWV_iconlem             = iconLemData.groups['Temp_data'].variables['IWV'][:].copy()  # in [K]
+    LTS_iconlem             = iconLemData.groups['Temp_data'].variables['LTS'][:].copy()
+    PBLheightRN_iconlem     = iconLemData.groups['Temp_data'].variables['PBLHeightArrRN'][:].copy()
+    PBLheightTW_iconlem     = iconLemData.groups['Temp_data'].variables['PBLHeightArrRN'][:].copy()
+    Tmatrix_iconlem         = iconLemData.groups['Temp_data'].variables['T'][:].copy()  # in [K]
+    w_iconlem               = iconLemData.groups['Temp_data'].variables['varianceW'][:].copy()
+    u_iconlem               = iconLemData.groups['Temp_data'].variables['zonalWind'][:].copy()
+    v_iconlem               = iconLemData.groups['Temp_data'].variables['merWind'][:].copy()
+    varianceW_icon_lem      = iconLemData.groups['Temp_data'].variables['varianceW'][:].copy()
+    stdW_icon_lem           = iconLemData.groups['Temp_data'].variables['stdWmatrix'][:].copy()
+    windSpeed_icon_lem      = iconLemData.groups['Temp_data'].variables['windSpeed'][:].copy()
+    windDirection_icon_lem  = iconLemData.groups['Temp_data'].variables['windDirection'][:].copy()
+    skenwessW_icon_lem      = iconLemData.groups['Temp_data'].variables['skewnessW'][:].copy()
     
     dict_iconlem_variables = {
             'IWV_iconlem':IWV_iconlem, 
             'LTS_iconlem':LTS_iconlem,
-            'PBLheight_iconlem':PBLheight_iconlem,
+            'PBLheightRN_iconlem':PBLheightRN_iconlem,
+            'PBLheightTW_iconlem':PBLheightTW_iconlem,
             'datetime_iconlem':datetime_ICON,
             'T_iconlem':Tmatrix_iconlem, 
+            'u_iconlem':u_iconlem,
+            'v_iconlem':v_iconlem,
+            'w_iconlem':w_iconlem,
+            'varianceW':varianceW_icon_lem, 
+            'stdW':stdW_icon_lem,
+            'skewnessW':skenwessW_icon_lem,
+            'PBLHeightRN':PBLheightRN_iconlem,
+            'PBLHeightTW':PBLheightTW_iconlem,
+            'windSpeed':windSpeed_icon_lem,#windData_ICON['windSpeed'], 
+            'windDirection':windDirection_icon_lem, #windData_ICON['windDirection'], 
             }
     
     # -----------------------------------------------------------------------------------
@@ -629,8 +677,8 @@ for iDay in range(Ndays):
     Pmatrix_cosmo     = P_cosmo_res.values.transpose()
     Tmatrix_cosmo     = T_cosmo_res.values.transpose()
     Thermodyn_cosmo   = f_calcThermodynamics(Pmatrix_cosmo, Qmatrix_cosmo, Tmatrix_cosmo, \
-                                             LTS_iconlem, datetime_ICON, height_ICON, Hsurf, model)
-    
+                                             LTS_iconlem, datetime_ICON, height_ICON, Hsurf)
+    #(P,Q,T, LTS, time, height, Hsurf
     print('calculating thermodynamic properties for iconlem')
     # reading P, Q, T for iconlem
     model             = 'iconlem'
@@ -638,32 +686,20 @@ for iDay in range(Ndays):
     Qmatrix_iconlem   = iconLemData.groups['Temp_data'].variables['q'][:].copy()  # in [kg/kg]
     
     Thermodyn_iconlem = f_calcThermodynamics(Pmatrix_iconlem, Qmatrix_iconlem, Tmatrix_iconlem, \
-                                             LTS_iconlem, datetime_ICON, height_ICON, Hsurf, model)
+                                             LTS_iconlem, datetime_ICON, height_ICON, Hsurf)
 
     #print('calculating thermodynamic properties for observations')
     ## reading P, from iconlem, q, t from microwave radiometer
+    print('calculating thermodynamic properties for MWR radiometer obs')
     model             = 'mwr'
     Pmatrix_obs       = iconLemData.groups['Temp_data'].variables['P'][:].copy()
     Qmatrix_obs       = qProf_obs_res.values.transpose()
     Tmatrix_obs       = tProf_obs_res.values.transpose()
     Thermodyn_obs     = f_calcThermodynamics(Pmatrix_obs, Qmatrix_obs, Tmatrix_obs, \
-                                            LTS_iconlem, datetime_ICON, height_ICON, Hsurf, model)
+                                            LTS_iconlem, datetime_ICON, height_ICON, Hsurf)
     # to debug: lcl array from microwave comes out of 3459 elements instead of 9600 and I don't know why
-    # -----------------------------------------------------------------------------------
-    # ---- calculating dynamics: PBl height, variance of w, shear, wind dir, wind intensity
-    # -----------------------------------------------------------------------------------           
-    timeWindow        = 200#10 #200 for 9 seconds  time window corresponding to 30 min considering that PBL data have time resolution of 3 minutes
 
-    from myFunctions import f_calcDynamics
-    print('calculating dynamics properties for iconlem')
-    w_iconlem         = iconLemData.groups['Temp_data'].variables['varianceW'][:].copy()
-    u_iconlem         = iconLemData.groups['Temp_data'].variables['zonalWind'][:].copy()
-    v_iconlem         = iconLemData.groups['Temp_data'].variables['merWind'][:].copy()
-    thetaV_iconlem    = Thermodyn_iconlem['virtualPotentialTemperature']
-    dynamics_iconlem  = f_calcDynamics(w_iconlem,u_iconlem,v_iconlem,\
-                                       thetaV_iconlem,datetime_ICON,height_ICON,\
-                                       timeWindow) 
- 
+
 
     # ----------------------------------------------------------------------------------
     # ---- writing data produced in a pickle file and compressing it
@@ -675,7 +711,6 @@ for iDay in range(Ndays):
                      Thermodyn_cosmo, \
                      Thermodyn_iconlem, \
                      Thermodyn_obs, \
-                     dynamics_iconlem, \
                      cloudDict_iconlem, \
                      cloudDict_obs, \
                      dict_iconlem_variables, \
