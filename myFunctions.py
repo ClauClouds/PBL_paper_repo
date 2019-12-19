@@ -96,7 +96,7 @@ def f_selectingPBLcloudWindow(date):
     
     
     
-
+#aa
 # closest function
 #---------------------------------------------------------------------------------
 # date :  16.10.2017
@@ -583,21 +583,23 @@ def f_calculateCloudFractionICON(QI, QC, yy, mm, dd, time, height, QiThreshold, 
 
 
     
-# function to derive wind speed and direction
+""" function to derive wind speed and direction
 #---------------------------------------------------------------------------------
-# date :  17.12.2018
-# author: Claudia Acquistapace (cacquist@meteo.uni-koeln.de)
-# goal: derive wind speed and direction in form of list and matrices
-# input: 
-# - datetime_ICON: time array
-# - height_ICON: height array
-# - u_ms: zonal wind
-# - v_ms: meridional wind
-# output:
-# - ws: list of wind speed
-# - wd: list of wind directions
-# - wind_abs: matrix of wind speed
-# - wind_dir_trig_from_degrees: matrix of wind direction in degrees indicating the direction from where wind is coming
+ date :  17.12.2018
+ author: Claudia Acquistapace (cacquist@meteo.uni-koeln.de)
+ goal: derive wind speed and direction in form of list and matrices
+ input: 
+ - datetime_ICON: time array
+ - height_ICON: height array
+ - u_ms: zonal wind
+ - v_ms: meridional wind
+ output:
+ - ws: list of wind speed
+ - wd: list of wind directions
+ - wind_abs: matrix of wind speed
+ - wind_dir_trig_from_degrees: matrix of wind direction in degrees indicating
+ the direction from where wind is coming
+"""
 #--------------------------------------------------------------------------------
 def f_calcWindSpeed_Dir(datetime_ICON, height_ICON, u_ms, v_ms):
     import math
@@ -618,7 +620,9 @@ def f_calcWindSpeed_Dir(datetime_ICON, height_ICON, u_ms, v_ms):
             wind_dir_trig_from_degrees[itime, iHeight] = wind_dir_trig_to_degrees[itime, iHeight] + 180 ## 68.38 degrees
             # wind dir in cardinal coordinates from the wind dir in degrees (wind_dir_trig_to_degrees) dir from where wind comes
             wind_dir_cardinal[itime, iHeight]          = 90 - wind_dir_trig_from_degrees[itime, iHeight]
-            if np.isfinite(wind_dir_trig_from_degrees[itime, iHeight]) and np.isfinite(wind_abs[itime, iHeight]) and             (wind_abs[itime, iHeight] != 0.):
+            if np.isfinite(wind_dir_trig_from_degrees[itime, iHeight]) and \
+                np.isfinite(wind_abs[itime, iHeight]) and \
+                (wind_abs[itime, iHeight] != 0.):
                 wd.append(wind_dir_trig_from_degrees[itime, iHeight])
                 ws.append(wind_abs[itime, iHeight])
     WindDictionary={'windDirection':ws,
@@ -1737,25 +1741,31 @@ def f_processRadiosondesDay(fileList, yy, mm, dd):
         RadiosondesData.append(dict_day)
     return(RadiosondesData)        
     
-def f_calcThermodynamics(P,Q,T, LTS, time, height, Hsurf, model):
-    # goal: derive thermodinamic quantities of interest for the analysis: 
-    # author: claudia Acquistapace
-    # date; 25 July 2019 (heat wave in Cologne)
-    # contact: cacquist@meteo.uni-koeln.de
-    # output: dictionary containing the following variables: 
-    #                'mixingRatio':r, 
-    #                'relativeHumidity':rh, 
-    #                'virtualTemperature':tv,
-    #                'cclHeight':result_ccl['z_ccl'],
-    #                'cclTemperature':result_ccl['T_ccl'],
-    #                'lclHeight':lclArray,
-    # input:         matrices of Pressure (pa), 
-    #                temperature (K), 
-    #                absolute humidity (Kg/Kg), 
-    #                time, 
-    #                height, 
-    #                height of the surface
-    
+def f_calcThermodynamics(P,Q,T, LTS, time, height, Hsurf):
+    """ 
+    author: claudia Acquistapace
+    date; 25 July 2019 (heat wave in Cologne)
+    contact: cacquist@meteo.uni-koeln.de
+    goal: derive thermodinamic quantities of interest for the analysis: 
+     output: dictionary containing the following variables: 
+                    'mixingRatio':r, 
+                    'relativeHumidity':rh, 
+                    'virtualTemperature':tv,
+                    'cclHeight':result_ccl['z_ccl'],
+                    'cclTemperature':result_ccl['T_ccl'],
+                    'lclHeight':lclArray,
+                    'surfaceTemperature':TSurf, 
+                    'virtualPotentialTemperature':Theta_v,
+                    'time':time, 
+                    'height':height,
+                    'LTS':LTS,
+     input:         matrices of Pressure (pa), 
+                    temperature (K), 
+                    absolute humidity (Kg/Kg), 
+                    time, 
+                    height, 
+                    height of the surface
+    """
     r  = np.zeros((len(time), len(height)))
     rh = np.zeros((len(time), len(height)))
     tv = np.zeros((len(time), len(height)))
@@ -1790,19 +1800,19 @@ def f_calcThermodynamics(P,Q,T, LTS, time, height, Hsurf, model):
     for iTime in range(len(time)):
         lclArray.append(lcl(PSurf[iTime],TSurf[iTime],rhSurf[iTime]/100.))
     
-    
-    
-    # calculation of virtual potential temperature ) P in pascal)
+    # calculation of potential and virtual potential temperature (P in pascal)
     Rd = 287.058  # gas constant for dry air [Kg-1 K-1 J]
     Cp = 1004.
+    Theta = np.zeros((len(time), len(height)))
     Theta_v = np.zeros((len(time), len(height)))
     for indTime in range(len(time)):
         for indHeight in range(len(height)):
             k_val = Rd*(1-0.23*r[indTime, indHeight])/Cp
-            Theta_v[indTime, indHeight]= ( (1 + 0.61 * r[indTime, indHeight]) * \
+            Theta_v[indTime, indHeight] = ( (1 + 0.61 * r[indTime, indHeight]) * \
                    T[indTime, indHeight] * (100000./P[indTime, indHeight])**k_val)
-
-
+            Theta[indTime, indHeight]   = T[indTime, indHeight] * (100000./P[indTime, indHeight])**k_val
+    
+    
     ThermodynPar={'mixingRatio':r, 
                   'relativeHumidity':rh, 
                   'virtualTemperature':tv,
@@ -1811,6 +1821,7 @@ def f_calcThermodynamics(P,Q,T, LTS, time, height, Hsurf, model):
                   'lclHeight':lclArray,
                   'surfaceTemperature':TSurf, 
                   'virtualPotentialTemperature':Theta_v,
+                  'potentialTemperature':Theta,
                   'time':time, 
                   'height':height,
                   'LTS':LTS,
@@ -1818,28 +1829,32 @@ def f_calcThermodynamics(P,Q,T, LTS, time, height, Hsurf, model):
     
     return(ThermodynPar)
 
-def f_calcDynamics(w,u,v,thetaV,time,height,timeWindow):
-        
-    # calculating variance of vertical velocity
-    from myFunctions import f_calcWvariance
-    #print('calculating variance of vertical velocity for observations')
-    varW = f_calcWvariance(w,time,height,timeWindow)
-        
-    #print('Calculating PBL height with Richardson number method')
-    from myFunctions import f_calcPblHeightRN
-    PBLHeightArr    = f_calcPblHeightRN(thetaV,u,v,height,time)
-
-    # calculation of wind direction and intensity for model output
-    windData_ICON   = f_calcWindSpeed_Dir(time, height, v, u)
-    #print('wind speed and direction calculated for ICON-LEM ')
-
-    DynPar={'varianceW':varW, 
-            'PBLHeight':PBLHeightArr, 
-            'windSpeed':windData_ICON['windSpeed'], 
-            'windDirection':windData_ICON['windDirection'], 
-            }
-    return(DynPar)
-    
+# =============================================================================
+    # OBSOLETE FUNCTION >> Calculation of variance, wind speed, with direction for model outputs
+    # are done in t he f_processModelOutput.py function
+# def f_calcDynamics(w,u,v,thetaV,time,height,timeWindow):
+#         
+#     # calculating variance of vertical velocity
+#     from myFunctions import f_calcWvariance
+#     #print('calculating variance of vertical velocity for observations')
+#     varW = f_calcWvariance(w,time,height,timeWindow)
+#         
+#     #print('Calculating PBL height with Richardson number method')
+#     from myFunctions import f_calcPblHeightRN
+#     PBLHeightArr    = f_calcPblHeightRN(thetaV,u,v,height,time)
+# 
+#     # calculation of wind direction and intensity for model output
+#     windData_ICON   = f_calcWindSpeed_Dir(time, height, v, u)
+#     #print('wind speed and direction calculated for ICON-LEM ')
+# 
+#     DynPar={'varianceW':varW, 
+#             'PBLHeight':PBLHeightArr, 
+#             'windSpeed':windData_ICON['windSpeed'], 
+#             'windDirection':windData_ICON['windDirection'], 
+#             }
+#     return(DynPar)
+#     
+# =============================================================================
     
     
 def f_resamplingMatrixCloudnet(time2change, height2change, matrix2change, timeRef, heightRef, matrixRef):
@@ -1948,10 +1963,7 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     from cloudnetFunctions import f_calculateCloudMaskCloudnet 
     
     date = str(yy)+str(mm)+str(dd)
-    
-    # read temperature field from the model for both obs and modeling
-    T = iconLemData.groups['Temp_data'].variables['T'][:].copy()
-    
+        
     # checking if the input is model or observations: in this case calculation 
     # of CB, CT, cloud fraction, cloud mask, reassignement of the variable LWC 
     # to ZE_lin as it really is, filtering Ze between cloud base and cloud top 
@@ -2064,6 +2076,7 @@ def f_calculateAllCloudQuantities(CloudInfo, \
                                                   Hwind, \
                                                   Wwind, \
                                                   LWC)
+
     duration           = []
     chordLength        = []
     massFlux           = []
@@ -2072,7 +2085,6 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     cloudTimeEnd       = []
     meanCT             = []
     meanCB             = []
-    meanCloudMaturity  = []
     meanCloudThickness = []
     meanUpdraftCB      = []
     Nclouds            = len(Dict_Clouds_arr)
@@ -2095,7 +2107,6 @@ def f_calculateAllCloudQuantities(CloudInfo, \
         meanheightFromCB[iCloud,:] = Dict_Clouds_arr[iCloud]['meanheightFromCB']
         meanCT.append(Dict_Clouds_arr[iCloud]['meanCT'])
         meanCB.append(Dict_Clouds_arr[iCloud]['meanCB'])
-        meanCloudMaturity.append(Dict_Clouds_arr[iCloud]['meanCloudMaturity'])
         meanCloudThickness.append(Dict_Clouds_arr[iCloud]['cloudThickness'])
         meanUpdraftCB.append(Dict_Clouds_arr[iCloud]['meanUpdraftSpeedCB'])
         
@@ -2155,14 +2166,12 @@ def f_calculateAllCloudQuantities(CloudInfo, \
                'massFlux':massFlux, 
                'timeCloudStart':cloudTimeStart, 
                'timeCloudEnd':cloudTimeEnd,
-               'cloudMaturity':meanCloudMaturity,
                'cloudThickness':meanCloudThickness,
                'cloudUpdraftCB':meanUpdraftCB,
                'Nclouds':Nclouds,
                'LWPall':LWP,
                'cloudThicknessAll':cloudThickness, 
                'UpdraftCBAll':UpdraftCB, 
-               'cloudMaturityAll':cloudMaturity
             }
     if device == 'obs':
         print('shape of meanHeight inside the function')
@@ -2191,7 +2200,6 @@ def f_calculateCloudProperties(datetime_ICON, \
                                CB_array_ICON, \
                                CT_array_ICON, \
                                UpdraftCB, \
-                               cloudMaturity, \
                                LWP_ICON, \
                                Hwind_ICON, \
                                w_ICON, \
@@ -2360,11 +2368,11 @@ def f_calculateCloudProperties(datetime_ICON, \
 
 
 def f_calcMeanStdVarProfiles(field, time, height, date, yy, mm, dd, NprofilesOut, timeIncrement):
-    # date: 02 aug 2019
-    # author: claudia Acquistapace
+    """date  : 02 aug 2019
+    # author : claudia Acquistapace
     # contact: cacquist@meteo.uni-koeln.de
-    # goal: function to calculate mean profiles of a field over a given time period. 
-    # input: 
+    # goal   : function to calculate mean profiles of a field over a given time period. 
+    # input  :
     #    - field: matrix to be averaged (it has to have dimensions (dim(time), dim(height)))
     #    - time
     #    - height
@@ -2377,8 +2385,13 @@ def f_calcMeanStdVarProfiles(field, time, height, date, yy, mm, dd, NprofilesOut
     #    - timeIncrement: interval of time chosed for the average (in minutes) 
     
     # output:
-    # 
-    
+    # dictionary of:
+    orderedDict['meanProfiles']
+    orderedDict['stdProfiles']
+    orderedDict['meanTime']
+    orderedDict['height']
+    orderedDict['date']
+    """
     # defining dataframes for calculating mean    
     field_DF        = pd.DataFrame(field, index=time, columns=height)
     #print(field_DF)
@@ -2400,10 +2413,9 @@ def f_calcMeanStdVarProfiles(field, time, height, date, yy, mm, dd, NprofilesOut
             HourInf = datetime.datetime(int(yy), int(mm), int(dd), 0, 0, 0) 
         else:
             HourInf = HourInf + deltaT
-        HourSup = HourInf + deltaT
+        HourSup                       = HourInf + deltaT
         datetime_out.append(HourInf)
-        indInt = indInt + 1
-        states = (field_DF.index < HourSup) & (field_DF.index > HourInf)
+        indInt                        = indInt + 1
         field_sliced_t                = field_DF.loc[(field_DF.index < HourSup) * (field_DF.index >= HourInf),:]
         field_mean                    = field_sliced_t.mean(axis=0, skipna=True)
         field_std                     = field_sliced_t.std(axis=0, skipna=True)
@@ -2412,12 +2424,12 @@ def f_calcMeanStdVarProfiles(field, time, height, date, yy, mm, dd, NprofilesOut
         Std_var_DF.loc[:,indInt]      = field_std
         
     
-    orderedDict                  = collections.OrderedDict()
-    orderedDict['meanProfiles']  = Profiles_var_DF.values
-    orderedDict['stdProfiles']   = Std_var_DF.values
-    orderedDict['meanTime']      = datetime_out
-    orderedDict['height']        = height
-    orderedDict['date']          = date   
+    orderedDict                       = collections.OrderedDict()
+    orderedDict['meanProfiles']       = Profiles_var_DF.values
+    orderedDict['stdProfiles']        = Std_var_DF.values
+    orderedDict['meanTime']           = datetime_out
+    orderedDict['height']             = height
+    orderedDict['date']               = date
 
     return(orderedDict)
 
