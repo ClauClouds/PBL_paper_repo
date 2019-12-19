@@ -12,10 +12,20 @@ listed below.
 
 general information on the content of the extracted pckle file:
 # the files .p contain the following array of dictionaries/lists: 
-#     outputArray   = [radiosondeList, tower_dict, dictCosmo, dictObsWindLidarMwr, Thermodyn_cosmo, \
-#                   Thermodyn_iconlem, Thermodyn_obs, dynamics_iconlem, cloudDict_iconlem, cloudDict_obs]
+    outputArray   = [radiosondeList, \           0
+                     tower_dict, \               1
+                     dictCosmo, \                2
+                     dictObsWindLidarMwr, \      3
+                     Thermodyn_cosmo, \          4
+                     Thermodyn_iconlem, \        5
+                     Thermodyn_obs, \            6
+                     cloudDict_iconlem, \        7 
+                     cloudDict_obs, \            8
+                     dict_iconlem_variables, \   9 
+                     dict_surface_fluxes]        10
 # Below we provide the definitions of each of them:
-# radiosondeList: 
+# =============================================================================
+# radiosondeList: index 0
 # =============================================================================
 # dict_day           = {
 #                 'time':DatetimeRadiosonde,
@@ -35,7 +45,7 @@ general information on the content of the extracted pckle file:
 #                 'surfaceTemperature':T_surf,
 #                 }
 # =============================================================================
-# tower_dict:     
+# tower_dict: index 1
 # =============================================================================
 # dictOut={
 #          'time':datetime_tower, 
@@ -49,7 +59,7 @@ general information on the content of the extracted pckle file:
 #      #    'RHsurf':RHsurf
 #      }
 # =============================================================================
-# dictCosmo
+# dictCosmo: index 2
 # =============================================================================
 #     dictCosmo = {'pressure':P_cosmo_res.values.transpose(),
 #                  'temperature':T_cosmo_res.values.transpose(),
@@ -58,22 +68,30 @@ general information on the content of the extracted pckle file:
 #                  }
 # 
 # =============================================================================
-# dictObsWindLidarMwr
+# dictObsWindLidarMwr: index 3
 # =============================================================================
-#     dictObsWindLidarMwr = {
-#             'verticalWind':w_obs_res.values.transpose(),
-#             'horizontalWind':Hwind_obs_res.values.transpose(),
-#             'skewnessW':skew_obs_res.values.transpose(),
-#             'PBLclassObs':PBLclass_obs_res.values.transpose(),
-#             'shear':shear_obs_res.values.transpose(),
-#             'windDirection':wDir_obs_res.values.transpose(),
-#             'absoluteHumidity':qProf_obs_res.values.transpose(),
-#             'temperature':tProf_obs_res.values.transpose(),
-#             'IWV_mwr':IWV_obs_res, 
-#             'LWP_mwr':LWP_obs_res,
-#             }
+#    dictObsWindLidarMwr = {
+#            'datetime_obs':datetime_lwp_iwv_joyce,
+#            'verticalWind':w_obs_res.values.transpose(),
+#            'horizontalWind':Hwind_obs_res.values.transpose(),
+#            'zonalWind':u_obs_res.values.transpose(),
+#            'meridionalWind':v_obs_res.values.transpose(), 
+#            'skewnessW':skew_obs_res.values.transpose(),
+#            'PBLclassObs':PBLclass_obs_res.values.transpose(),
+#            'shear':shear_obs_res.values.transpose(),
+#            'windDirection':wDir_obs_res.values.transpose(),
+#            'mixingLayerHeight_w_obs': zmlaw_obs_res.values.transpose(),
+#            'mixingLayerHeightErr_w_obs': zmlawErr_obs_res.values.transpose(),
+#            'absoluteHumidity':qProf_obs_res.values.transpose(),
+#            'temperature':tProf_obs_res.values.transpose(),
+#            'IWV_mwr':IWV_obs_res, 
+#            'LWP_mwr':LWP_obs_res,
+#            'LWC_cloudnet':LWC_obs_res,
+#            'height':height_ICON
+#            }
+
 # =============================================================================
-# Thermodyn_cosmo, Thermodyn_iconlem, Thermodyn_obs, 
+# Thermodyn_cosmo, Thermodyn_iconlem, Thermodyn_obs:  index 4, 5, 6
 # =============================================================================
 # 
 #     ThermodynPar={'mixingRatio':r, 
@@ -84,19 +102,13 @@ general information on the content of the extracted pckle file:
 #                   'lclHeight':lclArray,
 #                   'surfaceTemperature':TSurf, 
 #                   'virtualPotentialTemperature':Theta_v,
+#                   'potentialTemperature':Theta,
 #                   'time': time,
 #                   'height':height,
+#                   'LTS':LTS,
 #                   }
 # =============================================================================
-# dynamics_iconlem
-# =============================================================================
-#     DynPar={'varianceW':varW, 
-#             'PBLHeight':PBLHeightArr, 
-#             'windSpeed':windData_ICON['windSpeed'], 
-#             'windDirection':windData_ICON['windDirection'], 
-#             }
-# =============================================================================
-# cloudDict_iconlem, cloudDict_obs
+# cloudDict_iconlem, cloudDict_obs:  index 7, 8
 # =============================================================================
 #     dictOut = {'cloudMask':cloudMask, 
                'cloudBase':CB_array,
@@ -125,15 +137,29 @@ general information on the content of the extracted pckle file:
                'cloudMaturity':cloudMaturity
 #             }
 # =============================================================================
-    dict_iconlem_variables = {
+dict_iconlem_variables: index 9
+# =============================================================================
+#     dict_out = {
             'IWV_iconlem':IWV_iconlem, 
             'LTS_iconlem':LTS_iconlem,
-            'PBLheight_iconlem':PBLheight_iconlem,
+            'PBLheightRN_iconlem':PBLheightRN_iconlem,
+            'PBLheightTW_iconlem':PBLheightTW_iconlem,
             'datetime_iconlem':datetime_ICON,
-            'T_iconlem':T_matrix_iconlem
+            'T_iconlem':Tmatrix_iconlem, 
+            'u_iconlem':u_iconlem,
+            'v_iconlem':v_iconlem,
+            'w_iconlem':w_iconlem,
+            'varianceW':varianceW_icon_lem, 
+            'stdW':stdW_icon_lem,
+            'PBLHeightRN':PBLheightRN_iconlem,
+            'PBLHeightTW':PBLheightTW_iconlem,
+            'windSpeed':windSpeed_icon_lem,#windData_ICON['windSpeed'], 
+            'windDirection':windDirection_icon_lem, #windData_ICON['windDirection'], 
             }
 # =============================================================================
-    dict_surface_fluxes = {
+    dict_surface_fluxes: index 10
+# =============================================================================
+#      dict_out = {
             'SHF_iconlem':SHFL_30min.values,
             'LHF_iconlem':LHFL_30min.values,
             'datetime_30m':datetime_30m, 
@@ -172,6 +198,9 @@ from myFunctions import f_calcMeanStdVarProfiles
 from myFunctions import f_plotVarianceWSingleDays
 from myFunctions import f_calcWvariance
 from myFunctions import f_convertPressureToHeight
+from myFunctions import f_closest
+
+
 
 try:
     import cPickle as pickle
@@ -180,66 +209,67 @@ except ImportError:  # python 3.x
 
 
 # setting parameters for calculating averaging and domain size of the model:
-NprofilesOut  = 24  # hourly means
-timeIncrement = 60  # hourly means
-patch         = 'patch003'
+NprofilesOut                    = 24  # hourly means
+timeIncrement                   = 60  # hourly means
+patch                           = 'patch003'
 
 # flags for activating/deactivating plotting routines
-flagPlotThetaVglobalProfiles = 1
-flagThermodynVarScatterPlots = 1
-flagPlotCloudFractionGlobal  = 1
-flagPlotCloudProperties      = 1
-flagPlotMeanVarianceW        = 1
+flagPlotThetaVglobalProfiles    = 1
+flagThermodynVarScatterPlots    = 1
+flagPlotCloudFractionGlobal     = 1
+flagPlotCloudProperties         = 1
+flagPlotMeanVarianceW           = 1
 
 # directories where data are stored
 #path = '/Volumes/NO NAME/PBlcloudPaper/statistics/dataset_obs_model/'
-pathObs = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/'
+pathObs                         = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/'
 #'/work/cacquist/HDCP2_S2/statistics/dataset_obs_model/'
-pathMod = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/'
-pathFig = '/work/cacquist/HDCP2_S2/statistics/figs/'+patch+'/'
+pathMod                         = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/'
+pathFig                         = '/work/cacquist/HDCP2_S2/statistics/figs/'+patch+'/'
 #path = '/work/cacquist/HDCP2_S2/statistics/dataset_obs_model/'
 
 
 #filenameObs = 'dataset_PBLcloudPaper_ModObs_20130502.p'
 #filenameMod = 'icon_lem_derivedproperties20130502.nc'
 
-fileListObs               = sorted(glob.glob(pathObs+'*.p'))
-fileListMod               = sorted(glob.glob(pathMod+'*.nc'))
-Nfiles                    = len(fileListMod)
-dataset_mean_variance_obs = []
-dataset_mean_variance_mod = []
+fileListObs                     = sorted(glob.glob(pathObs+'*.p'))
+fileListMod                     = sorted(glob.glob(pathMod+'*.nc'))
+Nfiles                          = len(fileListMod)
+dataset_mean_variance_obs       = []
+dataset_mean_variance_mod       = []
 
 
 # cloud variables (mean of cloud units)
-cloudUpdraftCB_mod          = []
-cloudUpdraftCB_obs          = []
-cloudMaturity_mod           = []
-cloudMaturity_obs           = []
-datetime_ICON_arr           = []
-duration_obs                = []
-chordLength_obs             = []
-cloudMassFlux_obs                = []
-cloudLWP_obs                = []
-cloudLWP_mod                = []
-LWC_obs                     = []
-meanheightFromCB_obs        = []
-meanheightFromCB_mod        = []
-cloudMeanCB_mod             = []
-cloudMeanCT_mod             = []
-cloudMeanCB_obs             = []
-cloudMeanCT_obs             = []
-cloudThickness_mod = []
-cloudThickness_obs = []
-cloudUpdraftCB_mod = []
-cloudUpdraftCB_obs = []
-timeCloudStart_obs          = []
-timeCloudEnd_obs            = []
-duration_mod                = []
-chordLength_mod             = []
-cloudMassFlux_mod                = []
-LWC_mod                     = []
-timeCloudStart_mod          = []
-timeCloudEnd_mod            = []
+cloudUpdraftCB_mod              = []
+cloudUpdraftCB_obs              = []
+cloudMaturity_mod               = []
+cloudMaturity_obs               = []
+datetime_ICON_arr               = []
+duration_obs                    = []
+chordLength_obs                 = []
+cloudMassFlux_obs               = []
+LWC_obs                         = []
+duration_mod                    = []
+chordLength_mod                 = []
+cloudMassFlux_mod               = []
+LWC_mod                         = []
+timeCloudStart_mod              = []
+timeCloudEnd_mod                = []
+cloudLWP_obs                    = []
+cloudLWP_mod                    = []
+meanheightFromCB_obs            = []
+meanheightFromCB_mod            = []
+cloudMeanCB_mod                 = []
+cloudMeanCT_mod                 = []
+cloudMeanCB_obs                 = []
+cloudMeanCT_obs                 = []
+cloudThickness_mod              = []
+cloudThickness_obs              = []
+cloudUpdraftCB_mod              = []
+cloudUpdraftCB_obs              = []
+timeCloudStart_obs              = []
+timeCloudEnd_obs                = []
+
 
 # cloud fraction variables
 dataset_cloudFraction_obs       = []
@@ -250,129 +280,144 @@ dataset_cloudFractionIce_obs    = []
 dataset_cloudFractionIce_mod    = []
 
 # thermodynamic variables
-thetaV_radiosObs  = []
-thetaV_iconlem   = []
-rh_radiosObs = []
-rh_mod   = []
-T_mod   = []
-P_radiosondes = []
-T_radiosondes = []
-theta_v_radiosondes = []
-height_radiosondes = []     
-time_radiosondes = []
-theta_v_mod = []
-dateArr = []
-time_mod = []
-height_mod = []
-lcl_radiosondes = []
-ccl_radiosondes = []
-lts_radiosondes =[]
-pblHeight_radiosondes = []
-lcl_mod = []
-ccl_mod = []
-lts_mod = []
-pblHeight_mod = []
+thetaV_radiosObs                = []
+thetaV_iconlem                  = []
+thetaV_mwrObs                   = []
+rh_radiosObs                    = []
+rh_mod                          = []
+T_mod                           = []
+P_radiosondes                   = []
+T_radiosondes                   = []
+theta_v_radiosondes             = []
+height_radiosondes              = []
+time_radiosondes                = []
+theta_v_mod                     = []
+date_arr                        = []
+time_mod                        = []
+height_mod                      = []
+lcl_radiosondes                 = []
+ccl_radiosondes                 = []
+lts_radiosondes                 = []
+pblHeight_radiosondes           = []
+lcl_mod                         = []
+ccl_mod                         = []
+lts_mod                         = []
+pblHeightRN_mod                 = []
+pblHeightTW_mod                 = []
+pblHeightRN_windLidarObs        = []
+pblHeightTW_windLidarObs        = []
+
 
 # global variables
-IWV_obs = []
-IWV_mod = []
-LWP_all_obs = []
-LWP_all_mod = []
-cloudThicknessAll_obs = []
-cloudThicknessAll_mod = []
-cloudMaturityAll_mod = []
-cloudMaturityAll_obs = []
-updraftCBall_mod = []
-updraftCBall_obs = []
+IWV_obs                         = []
+IWV_mod                         = []
+LWP_all_obs                     = []
+LWP_all_mod                     = []
+cloudThicknessAll_obs           = []
+cloudThicknessAll_mod           = []
+updraftCBall_mod                = []
+updraftCBall_obs                = []
+LHSF_mod                        = []
+SHSF_mod                        = []
+LHSF_obs                        = []
+SHSF_obs                        = []
+LHSF_err_obs                    = []
+SHSF_err_obs                    = []
+datetime_30m                    = []
+LWF_mod                         = []
+SWF_mod                         = []
+LWF_obs                         = []
+SWF_obs                         = []
+LWF_err_obs                     = []
+SWF_err_obs                     = []
 
-date_arr = []
-LHSF_mod = []
-SHSF_mod = []
-LHSF_obs = []
-SHSF_obs = []
-LHSF_err_obs = []
-SHSF_err_obs = []
-datetime_30m = []
-LWF_mod = []
-SWF_mod = []
-LWF_obs = []
-SWF_obs = []
-LWF_err_obs = []
-SWF_err_obs = []
-# ----------------------------------------------------------------------------------------
-# ------- Analysis of the mean hourly profiles of variance of vertical velocity for obs. ICON-LEM
+
+# dinamical properties
+varianceW_obs                   = []
+varianceW_mod                   = []
+stdW_obs                        = []
+stdW_mod                        = []
+skewnessW_obs                   = []
+skewnessW_mod                   = []
+
 # ----------------------------------------------------------------------------------------
 # loop on the ensemble of days (statistics)
+# ----------------------------------------------------------------------------------------
+
 for indFile in range(Nfiles):
     
     
      print(indFile)
      filenameMod   = fileListMod[indFile]
      filenameObs   = fileListObs[indFile]
-     date = fileListMod[indFile][87:95]
-     yy = int(date[0:4])
-     mm = int(date[4:6])
-     dd = int(date[6:8])    
+     date          = fileListMod[indFile][87:95]
+     yy            = int(date[0:4])
+     mm            = int(date[4:6])
+     dd            = int(date[6:8])
+     
      date_arr.append(date)
      print('processing date '+date)
+     
      # reading time and height from ncdf file (grid of ICON LEM 
      #( ( sec resolution, 9600 time stamps, and 150 height levels)))
      ncdata        = Dataset(filenameMod, mode='r')
      time          = nc4.num2date(ncdata.groups['Temp_data'].variables['datetime_ICON'][:], \
                      ncdata.groups['Temp_data'].variables['datetime_ICON'].units)
-     height        = ncdata.groups['Temp_data'].variables['height2']
-     w_mod         = ncdata.groups['Temp_data'].variables['vertWind']
-     varW_mod      = ncdata.groups['Temp_data'].variables['varianceW']
+     height        = ncdata.groups['Temp_data'].variables['height2'][:]
+     #w_mod         = ncdata.groups['Temp_data'].variables['vertWind']
+     #varW_mod      = ncdata.groups['Temp_data'].variables['varianceW']
+     
      
      
      # opening the file containing all the data
      infile        = open(filenameObs,'rb')
      new_dict      = pickle.load(infile, encoding='latin1')
-     W_obs         = new_dict[3]['verticalWind']
-     print(np.shape(np.asarray(new_dict[8]['meanheightFromCB'])))
-     print(np.shape(new_dict[8]['cloudLWC']))
-     print(np.shape(np.asarray(new_dict[9]['meanheightFromCB'])))
-     print(np.shape(new_dict[9]['cloudLWC']))     
-     timeWindow    = 200 #10 #200 for 9 seconds time window corresponding 
-     #to 30 min considering that PBL data have time resolution of 3 minutes
-     varianceW_obs = f_calcWvariance(W_obs,time,height,timeWindow)
-
-     # reading cloud properties data: 
+          
+     # dinamic properties
+     varianceW_obs.append(new_dict[3]['varianceW'])
+     varianceW_mod.append(new_dict[9]['varianceW'])
+     stdW_obs.append(new_dict[3]['stdW'])
+     stdW_mod.append(new_dict[9]['stdW'])
+     skewnessW_obs.append(new_dict[3]['skewnessW'])
+     skewnessW_mod.append(ncdata.groups['Temp_data'].variables['skewnessW'][:])
+          
      # duration, chord length, cloud LWP, massflux, cloud fraction
-     duration_obs.append(np.asarray(new_dict[9]['duration']))
-     duration_mod.append(np.asarray(new_dict[8]['duration']))
-     chordLength_obs.append(np.asarray(new_dict[9]['chordLength']))
-     chordLength_mod.append(np.asarray(new_dict[8]['chordLength']))
-     cloudLWP_obs.append(np.asarray(new_dict[9]['cloudLWP']))
-     cloudLWP_mod.append(np.asarray(new_dict[8]['cloudLWP']))    
-     cloudMassFlux_obs.append(np.asarray(new_dict[9]['massFlux']))
-     cloudMassFlux_mod.append(np.asarray(new_dict[8]['massFlux']))
-     meanheightFromCB_mod.append(np.asarray(new_dict[8]['meanheightFromCB']))
-     meanheightFromCB_obs.append(np.asarray(new_dict[9]['meanheightFromCB']))
-     cloudMeanCB_mod.append(np.asarray(new_dict[8]['cloudMeanCB']))
-     cloudMeanCT_mod.append(np.asarray(new_dict[8]['cloudMeanCT']))
-     cloudMeanCB_obs.append(np.asarray(new_dict[9]['cloudMeanCB']))
-     cloudMeanCT_obs.append(np.asarray(new_dict[9]['cloudMeanCT']))
+     duration_obs.append(np.asarray(new_dict[8]['duration']))
+     duration_mod.append(np.asarray(new_dict[7]['duration']))
+     chordLength_obs.append(np.asarray(new_dict[8]['chordLength']))
+     chordLength_mod.append(np.asarray(new_dict[7]['chordLength']))
+     cloudLWP_obs.append(np.asarray(new_dict[8]['cloudLWP']))
+     cloudLWP_mod.append(np.asarray(new_dict[7]['cloudLWP']))    
+     cloudMassFlux_obs.append(np.asarray(new_dict[8]['massFlux']))
+     cloudMassFlux_mod.append(np.asarray(new_dict[7]['massFlux']))
+     meanheightFromCB_mod.append(np.asarray(new_dict[7]['meanheightFromCB']))
+     meanheightFromCB_obs.append(np.asarray(new_dict[8]['meanheightFromCB']))
+     cloudMeanCB_mod.append(np.asarray(new_dict[7]['cloudMeanCB']))
+     cloudMeanCT_mod.append(np.asarray(new_dict[7]['cloudMeanCT']))
+     cloudMeanCB_obs.append(np.asarray(new_dict[8]['cloudMeanCB']))
+     cloudMeanCT_obs.append(np.asarray(new_dict[8]['cloudMeanCT']))
+     LWC_obs.append(np.asarray(new_dict[8]['cloudLWC']))
+     LWC_mod.append(np.asarray(new_dict[7]['cloudLWC']))
+     timeCloudStart_obs.append(np.asarray(new_dict[8]['timeCloudStart']))
+     timeCloudStart_mod.append(np.asarray(new_dict[7]['timeCloudStart']))
+     timeCloudEnd_obs.append(np.asarray(new_dict[8]['timeCloudEnd']))
+     timeCloudEnd_mod.append(np.asarray(new_dict[7]['timeCloudEnd']))
      
-     LWC_obs.append(np.asarray(new_dict[9]['cloudLWC']))
-     LWC_mod.append(np.asarray(new_dict[8]['cloudLWC']))
-     timeCloudStart_obs.append(np.asarray(new_dict[9]['timeCloudStart']))
-     timeCloudStart_mod.append(np.asarray(new_dict[8]['timeCloudStart']))
-     timeCloudEnd_obs.append(np.asarray(new_dict[9]['timeCloudEnd']))
-     timeCloudEnd_mod.append(np.asarray(new_dict[8]['timeCloudEnd']))
-     dataset_cloudFraction_obs.append(new_dict[9]['totalCloudFraction'])
-     dataset_cloudFraction_mod.append(new_dict[8]['totalCloudFraction'])
-     dataset_cloudFractionLiquid_obs.append(new_dict[9]['liquidCloudFraction'])
-     dataset_cloudFractionLiquid_mod.append(new_dict[8]['liquidCloudFraction'])
-     dataset_cloudFractionIce_obs.append(new_dict[9]['iceCloudFraction'])
-     dataset_cloudFractionIce_mod.append(new_dict[8]['iceCloudFraction'])
-     dateArr.append(date)
-     if (len(new_dict[10]['IWV_iconlem']) == 9600):
-         IWV_mod.append(new_dict[10]['IWV_iconlem'])
-         LWP_all_mod.append(new_dict[8]['LWPall'])
-         cloudThicknessAll_mod.append(new_dict[8]['cloudThicknessAll'])
-         updraftCBall_mod.append(new_dict[8]['UpdraftCBAll'])
-         cloudMaturityAll_mod.append(new_dict[8]['cloudMaturity'])
+     # reading 30 min averaged cloud fractions for ice, liquid and both
+     dataset_cloudFraction_obs.append(new_dict[8]['totalCloudFraction'])
+     dataset_cloudFraction_mod.append(new_dict[7]['totalCloudFraction'])
+     dataset_cloudFractionLiquid_obs.append(new_dict[8]['liquidCloudFraction'])
+     dataset_cloudFractionLiquid_mod.append(new_dict[7]['liquidCloudFraction'])
+     dataset_cloudFractionIce_obs.append(new_dict[8]['iceCloudFraction'])
+     dataset_cloudFractionIce_mod.append(new_dict[7]['iceCloudFraction'])
+     
+     
+     # reading time series on icon time resolution.
+     if (len(new_dict[9]['IWV_iconlem']) == 9600):
+         IWV_mod.append(new_dict[9]['IWV_iconlem'])
+         LWP_all_mod.append(new_dict[7]['LWPall'])
+         cloudThicknessAll_mod.append(new_dict[7]['cloudThicknessAll'])
+         updraftCBall_mod.append(new_dict[7]['UpdraftCBAll'])
      else:
          IWVarraymod = np.zeros((9600))
          IWVarraymod.fill(np.nan)
@@ -385,23 +430,21 @@ for indFile in range(Nfiles):
          updraftCBarraymod = np.zeros((9600))
          updraftCBarraymod.fill(np.nan)
          
-         IWVarraymod[0:len(new_dict[10]['IWV_iconlem'])] = new_dict[10]['IWV_iconlem']
-         LWParraymod[0:len(new_dict[8]['LWPall'])] = new_dict[8]['LWPall']
-         thicknessarraymod[0:len(new_dict[8]['cloudThicknessAll'])] = new_dict[8]['cloudThicknessAll']
-         maturityarraymod[0:len(new_dict[8]['cloudMaturity'])] = new_dict[8]['cloudMaturity']
-         updraftCBarraymod[0:len(new_dict[8]['UpdraftCBAll'])] = new_dict[8]['UpdraftCBAll']
+         IWVarraymod[0:len(new_dict[9]['IWV_iconlem'])] = new_dict[9]['IWV_iconlem']
+         LWParraymod[0:len(new_dict[7]['LWPall'])] = new_dict[7]['LWPall']
+         thicknessarraymod[0:len(new_dict[7]['cloudThicknessAll'])] = new_dict[7]['cloudThicknessAll']
+         updraftCBarraymod[0:len(new_dict[7]['UpdraftCBAll'])] = new_dict[7]['UpdraftCBAll']
+         
          IWV_mod.append(IWVarraymod)
          LWP_all_mod.append(LWParraymod)
          cloudThicknessAll_mod.append(thicknessarraymod)
          updraftCBall_mod.append(updraftCBarraymod)
-         cloudMaturityAll_mod.append(maturityarraymod)
          
      if (len(new_dict[3]['IWV_mwr']) == 9600):
          IWV_obs.append(new_dict[3]['IWV_mwr'])
          LWP_all_obs.append(new_dict[3]['LWP_mwr'])
-         cloudThicknessAll_obs.append(new_dict[9]['cloudThicknessAll'])
-         updraftCBall_obs.append(new_dict[9]['UpdraftCBAll'])
-         cloudMaturityAll_obs.append(new_dict[9]['cloudMaturity'])
+         cloudThicknessAll_obs.append(new_dict[8]['cloudThicknessAll'])
+         updraftCBall_obs.append(new_dict[8]['UpdraftCBAll'])
 
      else:
          IWVarrayobs = np.zeros((9600))
@@ -414,24 +457,26 @@ for indFile in range(Nfiles):
          maturityarrayobs.fill(np.nan)
          updraftCBarrayobs = np.zeros((9600))
          updraftCBarrayobs.fill(np.nan)
+         
          IWVarrayobs[0:len(new_dict[3]['IWV_mwr'])] = new_dict[3]['IWV_mwr']
          LWParrayobs[0:len(new_dict[3]['LWP_mwr'])] = new_dict[3]['LWP_mwr']
-         thicknessarrayobs[0:len(new_dict[9]['cloudThicknessAll'])] = new_dict[9]['cloudThicknessAll']
-         maturityarrayobs[0:len(new_dict[9]['cloudMaturity'])] = new_dict[9]['cloudMaturity']
-         updraftCBarrayobs[0:len(new_dict[9]['UpdraftCBAll'])] = new_dict[9]['UpdraftCBAll']
+         thicknessarrayobs[0:len(new_dict[8]['cloudThicknessAll'])] = new_dict[8]['cloudThicknessAll']
+         updraftCBarrayobs[0:len(new_dict[8]['UpdraftCBAll'])] = new_dict[8]['UpdraftCBAll']
+         
+         
          IWV_obs.append(IWVarrayobs)
          LWP_all_obs.append(LWParrayobs)
          cloudThicknessAll_obs.append(thicknessarrayobs)
          updraftCBall_obs.append(updraftCBarrayobs)
-         cloudMaturityAll_obs.append(maturityarrayobs)
          
          
-     datetime_ICON_arr.append(new_dict[10]['datetime_iconlem'])
+     datetime_ICON_arr.append(new_dict[9]['datetime_iconlem'])
      
 
      # reading data radiosoundings
      from myFunctions import f_reshapeRadiosondes
-     RadiosondeFormatted = f_reshapeRadiosondes(new_dict)   
+     RadiosondeFormatted = f_reshapeRadiosondes(new_dict)
+     
      P_radiosondes.append(RadiosondeFormatted['P'])
      T_radiosondes.append(RadiosondeFormatted['T'])
      theta_v_radiosondes.append(RadiosondeFormatted['theta_v'])
@@ -443,35 +488,36 @@ for indFile in range(Nfiles):
      pblHeight_radiosondes.append(RadiosondeFormatted['pblHeight'])
      rh_radiosObs.append(RadiosondeFormatted['RH'])
     
-     # reading model data from lem
+     # reading model data from lem for fluxes at surface and atm indeces
      theta_v_mod.append(new_dict[5]['virtualPotentialTemperature'])
      time_mod.append(new_dict[5]['time'])
      height_mod.append(new_dict[5]['height'])
      lcl_mod.append(new_dict[5]['lclHeight'])
      ccl_mod.append(new_dict[5]['cclHeight'])
-     lts_mod.append(new_dict[10]['LTS_iconlem'])
-     LHSF_mod.append(new_dict[11]['LHF_iconlem'])
-     SHSF_mod.append(new_dict[11]['SHF_iconlem'])
-     LHSF_obs.append(new_dict[11]['LHF_obs'])
-     SHSF_obs.append(new_dict[11]['SHF_obs'])
-     LHSF_err_obs.append(new_dict[11]['LHF_Err_obs'])
-     SHSF_err_obs.append(new_dict[11]['SHF_Err_obs'])     
-     datetime_30m.append(new_dict[11]['datetime_30m'])
-     LWF_mod.append(new_dict[11]['LW_iconlem'])
-     SWF_mod.append(new_dict[11]['SW_iconlem'])
-     LWF_obs.append(new_dict[11]['LW_obs'])
-     SWF_obs.append(new_dict[11]['SW_obs'])
-     LWF_err_obs.append(new_dict[11]['LW_Err_obs'])
-     SWF_err_obs.append(new_dict[11]['SW_Err_obs'])
-     pblHeight_mod.append(new_dict[7]['PBLHeight'])
+     lts_mod.append(new_dict[5]['LTS'])
+     LHSF_mod.append(new_dict[10]['LHF_iconlem'])
+     SHSF_mod.append(new_dict[10]['SHF_iconlem'])
+     LHSF_obs.append(new_dict[10]['LHF_obs'])
+     SHSF_obs.append(new_dict[10]['SHF_obs'])
+     LHSF_err_obs.append(new_dict[10]['LHF_Err_obs'])
+     SHSF_err_obs.append(new_dict[10]['SHF_Err_obs'])     
+     datetime_30m.append(new_dict[10]['datetime_30m'])
+     LWF_mod.append(new_dict[10]['LW_iconlem'])
+     SWF_mod.append(new_dict[10]['SW_iconlem'])
+     LWF_obs.append(new_dict[10]['LW_obs'])
+     SWF_obs.append(new_dict[10]['SW_obs'])
+     LWF_err_obs.append(new_dict[10]['LW_Err_obs'])
+     SWF_err_obs.append(new_dict[10]['SW_Err_obs'])
+     
+     pblHeightTW_mod.append(new_dict[9]['PBLHeightTW'])
+     pblHeightRN_mod.append(new_dict[9]['PBLHeightRN'])
      rh_mod.append(new_dict[5]['relativeHumidity'])
-     T_mod.append(new_dict[10]['T_iconlem'])
-     cloudThickness_mod.append(new_dict[8]['cloudThickness'])
-     cloudThickness_obs.append(new_dict[9]['cloudThickness'])
-     cloudUpdraftCB_mod.append(new_dict[8]['cloudUpdraftCB'])
-     cloudUpdraftCB_obs.append(new_dict[9]['cloudUpdraftCB'])
-     cloudMaturity_mod.append(new_dict[8]['cloudMaturity'])
-     cloudMaturity_obs.append(new_dict[9]['cloudMaturity'])
+     T_mod.append(new_dict[9]['T_iconlem'])
+     
+     cloudThickness_mod.append(new_dict[7]['cloudThickness'])
+     cloudThickness_obs.append(new_dict[8]['cloudThickness'])
+     cloudUpdraftCB_mod.append(new_dict[7]['cloudUpdraftCB'])
+     cloudUpdraftCB_obs.append(new_dict[8]['cloudUpdraftCB'])
 
      # ----------------------------------------------------------------------------------------
      # ------- Analysis of the mean hourly profiles of variance of vertical velocity for obs. ICON-LEM, ICON-INSCAPE
@@ -479,9 +525,9 @@ for indFile in range(Nfiles):
      #---- calculating mean variance and standard deviation profiles for each hour of the day for obs and model
      print('calculating mean variance and standard deviation profiles for each \
            hour of the day for obs and models')
-     varianceWmean_obs = f_calcMeanStdVarProfiles(varianceW_obs, time[:], height[:],\
+     varianceWmean_obs = f_calcMeanStdVarProfiles(new_dict[3]['varianceW'], time[:], height[:],\
                                      date, yy, mm, dd, NprofilesOut, timeIncrement) 
-     varianceWmean_mod = f_calcMeanStdVarProfiles(varW_mod[:,:], time[:], height[:], \
+     varianceWmean_mod = f_calcMeanStdVarProfiles(new_dict[9]['varianceW'], time[:], height[:], \
                                      date, yy, mm, dd, NprofilesOut, timeIncrement) 
  
      dataset_mean_variance_obs.append(varianceWmean_obs)
@@ -534,8 +580,6 @@ cloudThickness_All_obs   = np.concatenate(cloudThickness_obs, axis=0)
 cloudThickness_All_mod   = np.concatenate(cloudThickness_mod, axis=0)
 cloudUpdraftCB_All_obs   = np.concatenate(cloudUpdraftCB_obs, axis=0)
 cloudUpdraftCB_All_mod   = np.concatenate(cloudUpdraftCB_mod, axis=0)
-cloudMaturity_All_mod    = np.concatenate(cloudMaturity_mod, axis=0)
-cloudMaturity_All_obs    = np.concatenate(cloudMaturity_obs, axis=0)
 cloudLWP_All_mod         = np.concatenate(cloudLWP_mod, axis=0)
 cloudLWP_All_obs         = np.concatenate(cloudLWP_obs, axis=0)
 cloudMassFlux_All_mod    = np.concatenate(cloudMassFlux_mod, axis=0)
@@ -554,8 +598,6 @@ CB_obs_DF                = pd.Series(cloudMeanCB_All_obs, index=duration_all_obs
 CB_mod_DF                = pd.Series(cloudMeanCB_All_mod, index=duration_all_mod)
 CT_obs_DF                = pd.Series(cloudMeanCT_All_obs, index=duration_all_obs)
 CT_mod_DF                = pd.Series(cloudMeanCT_All_mod, index=duration_all_mod)
-cloudMaturity_obs_DF     = pd.Series(cloudMaturity_All_obs, index=duration_all_obs)
-cloudMaturity_mod_DF     = pd.Series(cloudMaturity_All_mod, index=duration_all_mod)
 cloudUpdraftCB_obs_DF    = pd.Series(cloudUpdraftCB_All_obs, index=duration_all_obs)
 cloudUpdraftCB_mod_DF    = pd.Series(cloudUpdraftCB_All_mod, index=duration_all_mod)
 cloudThickness_obs_DF    = pd.Series(cloudThickness_All_obs, index=duration_all_obs)
@@ -830,8 +872,6 @@ thickness_obs_distr_arr = []
 thickness_mod_distr_arr = []
 updraftCB_obs_distr_arr = []
 updraftCB_mod_distr_arr = []
-maturity_obs_distr_arr  = []
-maturity_mod_distr_arr  = []
 LWP_obs_distr_arr       = []
 LWP_mod_distr_arr       = []
 massFlux_obs_distr_arr  = []
@@ -904,8 +944,6 @@ for indDuration in range(0, len(duration_intervals)):
     thickness_mod_distr_arr.append(cloudThickness_mod_DF.loc[mask_duration_mod])
     updraftCB_obs_distr_arr.append(cloudUpdraftCB_obs_DF.loc[mask_duration_obs])
     updraftCB_mod_distr_arr.append(cloudUpdraftCB_mod_DF.loc[mask_duration_mod])
-    maturity_obs_distr_arr.append(cloudMaturity_obs_DF.loc[mask_duration_obs])
-    maturity_mod_distr_arr.append(cloudMaturity_mod_DF.loc[mask_duration_mod])
     LWP_obs_distr_arr.append(cloudLWP_obs_DF.loc[mask_duration_obs])
     LWP_mod_distr_arr.append(cloudLWP_mod_DF.loc[mask_duration_mod])
     massFlux_obs_distr_arr.append(cloudMassFlux_obs_DF.loc[mask_duration_obs])
@@ -1437,11 +1475,28 @@ theta_v_dict_obs_mod_arr = f_calculateMeanThetaVModelProfiles(time_radiosondes, 
                                                               height_mod, \
                                                               lcl_mod, \
                                                               lts_mod, \
-                                                              pblHeight_mod)
+                                                              pblHeightRN_mod)
 
 
 from myFunctions import f_calculateMeanProfilesPlotThetaVRadiosondes
 result = f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, height_mod)
+
+def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
+                                       theta_v_radiosondes,\
+                                       T_radiosondes, \
+                                       rh_radiosObs, \
+                                       height_radiosondes, \
+                                       lcl_radiosondes, \
+                                       lts_radiosondes, \
+                                       pblHeight_radiosondes, \
+                                       theta_v_mod, \
+                                       T_mod, \
+                                       rh_mod, \
+                                       time_mod, \
+                                       height_mod, \
+                                       lcl_mod, \
+                                       lts_mod, \
+                                       pblHeight_mod):
 MatrixHourMeanProfileThetaRad = result[0]
 MatrixHourStdProfileThetaRad  = result[1]
 listHourDict                  = result[2]
@@ -1463,7 +1518,7 @@ if flagPlotThetaVglobalProfiles == 1:
     Nplots = 11
     
     
-    fig, ax       = plt.subplots(nrows=Nrows, ncols=Ncols, figsize=(12,10))
+    fig, ax       = plt.subplots(nrows=Nrows, ncols=Ncols, figsize=(14,10))
     #matplotlib.rcParams['savefig.dpi'] = 300
     plt.gcf().subplots_adjust(bottom=0.15)
     fig.tight_layout()
@@ -1525,9 +1580,77 @@ if flagPlotThetaVglobalProfiles == 1:
         #plt.title('8:00 UTC', fontsize=fontSizeTitle)
         ax[indx,indy].set_xlabel('${\Theta_v}$[K]', fontsize=fontSizeX)
         ax[indx,indy].set_ylabel('height [m]', fontsize=fontSizeY)
-    fig.subplots_adjust(hspace=0.15, bottom=0.1,)   
+    fig.subplots_adjust(hspace=0.15, bottom=0.1,left=0.05)   
     ax[1,3].set_visible(False) # to remove last plot
     fig.savefig(pathFig+'theta_v_globalMeanDataset_diurnal_cycle_obs_mod.png', format='png')
+
+
+
+
+
+
+    
+    fig, ax       = plt.subplots(nrows=Nrows, ncols=Ncols, figsize=(14,10))
+    #matplotlib.rcParams['savefig.dpi'] = 300
+    plt.gcf().subplots_adjust(bottom=0.15)
+    fig.tight_layout()
+    ymax          = 2500.
+    ymin          = height_mod[0][-1]
+    xmin          = -5.
+    xmax          = 15.
+    fontSizeTitle = 16
+    fontSizeX     = 12
+    fontSizeY     = 12
+    #timeTitles = [']
+    indxArr = [0,0,0,0,1,1,1]
+    indyArr = [0,1,2,3,0,1,2]
+
+    for indPlot in range(0,len(indxArr)):
+        
+        # reading number of profiles, lcl and pbl heights for the selected hour
+        Nprofiles = listHourDict[indexPlot[indPlot]]['Nprofiles']
+        
+        # assigning indeces for subplot positions 
+        indx      = indxArr[indPlot]
+        indy      = indyArr[indPlot]
+        
+        #removing subplot box top and right lines
+        ax[indx,indy].spines["top"].set_visible(False)  
+        ax[indx,indy].spines["right"].set_visible(False)  
+        ax[indx,indy].get_xaxis().tick_bottom()  
+        ax[indx,indy].get_yaxis().tick_left() 
+        ax[indx,indy].text(284, 2000., 'N = '+str(Nprofiles), fontsize=10)
+        matplotlib.rc('xtick', labelsize=10)                        # sets dimension of ticks in the plots
+        matplotlib.rc('ytick', labelsize=10)                        # sets dimension of ticks in the plots
+        prof_mod  = listHourDict[indexPlot[indPlot]]['meanProfile_mod']
+        prof_obs  = MatrixHourMeanProfileThetaRad[:, indexPlot[indPlot]]
+        std_mod   = listHourDict[indexPlot[indPlot]]['stdProfileMod']
+        labelHour = listHourDict[indexPlot[indPlot]]['hour']
+        std_obs   = MatrixHourStdProfileThetaRad[:, indexPlot[indPlot]]
+        
+        # reading values at 2500 for obs and mod
+        thetaV2500    = prof_obs[f_closest(gridHeight, 2500.)]
+        thetaV2500Arr = np.repeat(thetaV2500, len(gridHeight))
+        thetaVdiffObs = thetaV2500Arr - prof_obs
+        thetaVdiffMod = thetaV2500Arr - prof_mod
+        ax[indx,indy].plot(thetaVdiffObs, gridHeight, label='obs '+str(labelHour)+' UTC',  color='black')
+        ax[indx,indy].plot(thetaVdiffMod, gridHeight, label='icon-lem',  color='red')
+        y1        = thetaV2500Arr-prof_obs-std_obs
+        y2        = thetaV2500Arr-prof_obs+std_obs
+        ax[indx,indy].fill_betweenx(gridHeight, y1, y2, where=y2>y1, facecolor='black', alpha=0.2)
+        y1        = thetaV2500Arr-prof_mod-std_mod
+        y2        = thetaV2500Arr-prof_mod+std_mod
+        ax[indx,indy].fill_betweenx(height_mod[0], y1, y2, where=y2>y1, facecolor='red', alpha=0.2)
+        ax[indx,indy].legend(loc='upper right', fontsize=12, frameon=False)
+        ax[indx,indy].set_ylim(ymin,ymax)
+        ax[indx,indy].set_xlim(xmin,xmax)
+        #plt.title('8:00 UTC', fontsize=fontSizeTitle)
+        ax[indx,indy].set_xlabel('${\Delta\Theta_v}$[K]', fontsize=fontSizeX)
+        ax[indx,indy].set_ylabel('height [m]', fontsize=fontSizeY)
+    fig.subplots_adjust(hspace=0.15, bottom=0.1, left=0.05)   
+    ax[1,3].set_visible(False) # to remove last plot
+    fig.savefig(pathFig+'theta_v_globalMeanDataset_difference_diurnal_cycle_obs_mod.png', format='png')
+
 
 #%%
 #### PLOT for Temperature profiles
@@ -1823,55 +1946,6 @@ fig.tight_layout()
 plt.savefig(pathFig+'IWV_distrib_mod_hours_obs_stat_global.png', format='png')    
 
 #=============================================================================
-
-#%%
-# Distributions of LWP per hour of the day
-nbins = 20
-ymax  = 0.2
-fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,8))
-matplotlib.rcParams['savefig.dpi'] = 100
-plt.gcf().subplots_adjust(bottom=0.15)
-xmin    = 0.
-xmax    = 500.
-indplot = 1
-for indHour in range(len(hours)-1):
-    hourInf = hours[indHour]
-    hourSup = hours[indHour+1]
-    hinf_idx = hour2idx(hourInf)
-    hsup_idx = hour2idx(hourSup)
-    
-    mod = LWP_mod_nd[hinf_idx:hsup_idx,:]
-    obs = LWP_obs_nd[hinf_idx:hsup_idx,:]
-    percentiles_mod = np.nanpercentile(mod, [25, 50, 75, 90])
-    percentiles_obs = np.nanpercentile(obs, [25, 50, 75, 90])
-    
-    #plt.figure()
-    #plt.hist(mod.flatten(),range=(10,30), normed=True, alpha=0.5)
-    #lt.hist(obs.flatten(),range=(10,30), normed=True, alpha=0.5)
-    ax = plt.subplot(2,3,indplot)  
-    ax.spines["top"].set_visible(False)  
-    ax.spines["right"].set_visible(False)  
-    ax.get_xaxis().tick_bottom()  
-    ax.get_yaxis().tick_left()     
-    matplotlib.rc('xtick', labelsize=12)                        # sets dimension of ticks in the plots
-    matplotlib.rc('ytick', labelsize=12)                        # sets dimension of ticks in the plots
-    ax.set_ylabel('norm occurrences')
-    ax.set_xlabel('LWP [Kg/m^2]')
-    #ax.ylim(ymax)
-    plt.ylim(0.,ymax)
-    plt.xlim(xmin, xmax)
-    plt.text(19., ymax-1.5*ymax/10., 'median mod = '+str(round(percentiles_mod[1], 1)))
-    plt.text(19., ymax-2.*ymax/10., 'median obs = '+str(round(percentiles_obs[1], 1)))  
-    plt.grid(b=True, which='major', color='#666666', linestyle=':')
-    plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], alpha=0.1, label='icon-lem')       
-    plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], alpha=0.1, label='obs')       
-    plt.hist(mod.flatten(), bins=nbins, normed=True, color='red', cumulative=False, range=[xmin, xmax], histtype='step')       
-    plt.hist(obs.flatten(), bins=nbins, normed=True, color='black', cumulative=False, range=[xmin, xmax], histtype='step')      
-    plt.legend(loc='upper left', fontsize=12, frameon=False)
-    ax.set_title(str(hourInf)+' - '+str(hourSup)+' UTC')
-    indplot= indplot+1
-fig.tight_layout()
-plt.savefig(pathFig+'LWP_distrib_mod_hours_obs_stat_global.png', format='png')    
 
 #%%
 # =============================================================================
