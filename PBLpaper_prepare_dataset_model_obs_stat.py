@@ -77,7 +77,7 @@ timewindow    = 200      # time window for calculating running mean of variance 
 gradWindThr   = 0.01     # Threshold for wind gradient to determine wind shear presence in the PBLclas
 timeWindowSk  = 33       # number of time stamps corresponding to 5 minutes in the ICON file
 runningWindow = 200*4    # number of time stamps corresponding to 30 minutes running window for the average
-
+distMinClouds = 50       # minimum height distance between a cloud base and the subsequent one to consider the two cloud bases belonging to the same cloud
 # ----- creating dictionary of input parameters to process icon lem model output
 modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'QcThresholdVar':QcThreshold, \
                   'QiThresholdVar':QiThreshold, 'SigmaWThresStd':SigmaWThres, 'nTimeMeanVar':nTimeMean, \
@@ -86,11 +86,17 @@ modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'Q
 
 
 # ----- define list of days to be processed 
-#dayList           = ['20130502']
-dayList           = ['20130424','20130425', '20130427','20130429','20130501',\
-                     '20130502','20130503','20130504', '20130505','20130506',\
-                     '20130509','20130510','20130518']
-#    ,'20130424', '20130425', '20130427','20130429','20130501','20130502', '20130518'
+#dayList           = ['20130420', '20130426','20130428', '20130430','20130524','20130525','20130527', '20130528']
+#dayList           = ['20130424','20130425', '20130427','20130429','20130501',\
+#                     '20130502','20130503','20130504', '20130505','20130506',\
+#                     ,'20130518']
+# days processed on 17 april: '20130426''20130414','20130420','20130424', '20130425',
+# '20130427','20130428','20130429','20130430','20130501','20130502','20130503','20130504', '20130505','20130506','20130509','20130510'
+#
+#
+# ,'20130424', '20130425', '20130427','20130429','20130501','20130502', '20130518'
+dayList = ['20130518','20130524','20130525','20130527', '20130528']
+# new days : = ['20130414','20130420', '20130426','20130428', '20130430','20130524','20130525','20130527', '20130528']
 Ndays             = len(dayList)
 
 # dayListAll = ['20130413','20130414','20130417','20130418','20130419','20130420', \
@@ -134,7 +140,7 @@ for iDay in range(Ndays):
     pathDebugFig      = '/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/'+date+'/'
 
     # set, based on human inspection, the time interval in which to select clouds
-    cloudTimeArray = f_selectingPBLcloudWindow(date)
+    humanInfo = f_selectingPBLcloudWindow(date)
 
     print('PROCESSING DAY:'+date)        
     if (reprocICON == 1) or (os.path.isfile('/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/icon_lem_derivedproperties'+date+'.nc') == True):
@@ -149,7 +155,7 @@ for iDay in range(Ndays):
         readingFile           = f_processModelOutput(path_icon, iconFilename, \
                                                  modelInputParameters, \
                                                  date, \
-                                                 cloudTimeArray, \
+                                                 humanInfo, \
                                                  debuggingFlag, \
                                                  verboseFlag, \
                                                  pathDebugFig, \
@@ -158,6 +164,7 @@ for iDay in range(Ndays):
         # assigning a string name to the file just created for the next steps of the code
         iconLemData           = Dataset('/work/cacquist/HDCP2_S2/statistics/iconLemProcessed_'+patch+'/icon_lem_derivedproperties'+date+'.nc', mode='r')
         print('reprocessing or processing the day for the first time')
+
 
     
     # -----------------------------------------------------------------------------------    
@@ -175,7 +182,8 @@ for iDay in range(Ndays):
     ICON_DF        = pd.DataFrame(cloudMask_ICON, index=datetime_ICON, columns=height_ICON)     
     ICON_DF_T      = pd.DataFrame(cloudMask_ICON.transpose(), index=height_ICON, columns=datetime_ICON)
     print('icon file read')
-    
+
+    print('dimensione time icon, datetime', len(time_ICON))
       
     # -----------------------------------------------------------------------------------
     # ---- LWC data from scaled adiabatic cloudnet profiles
@@ -206,15 +214,25 @@ for iDay in range(Ndays):
     fileList = glob.glob(pathIn+'*.txt')
     
     for indRemove in range(len(fileList)):
+        if fileList[indRemove] == 'KIT_HOPE_2013042013.txt':
+            del fileList[indRemove]
         if fileList[indRemove] == 'KIT_HOPE_2013042411.txt':
             del fileList[indRemove]
         if fileList[indRemove] == 'KIT_HOPE_2013042509.txt':
             del fileList[indRemove]            
         if fileList[indRemove] == 'KIT_HOPE_2013042511.txt':
             del fileList[indRemove]
+        if fileList[indRemove] == 'KIT_HOPE_2013042616.txt':
+            del fileList[indRemove]
+        if fileList[indRemove] == 'KIT_HOPE_2013043011.txt':
+            del fileList[indRemove]
+        if fileList[indRemove] == 'KIT_HOPE_2013050311.txt':
+            del fileList[indRemove]
         if fileList[indRemove] == 'KIT_HOPE_2013050515.txt':
             del fileList[indRemove]
-        if fileList[indRemove] == 'KIT_HOPE_2013042411.txt':
+        if fileList[indRemove] == 'KIT_HOPE_2013052513.txt':
+            del fileList[indRemove]
+        if fileList[indRemove] == 'KIT_HOPE_2013052715.txt':
             del fileList[indRemove]
     
     if os.listdir(pathIn):    
@@ -246,7 +264,6 @@ for iDay in range(Ndays):
         print('resampling tower observations on ICON time resolution (surf meas, no need for height resampling')
         Psurf_res = f_resamplingfield(P_surf, datetime_tower, ICON_DF)
         Tsurf_res = f_resamplingfield(T_surf, datetime_tower, ICON_DF)
-        
         print('resampled tower observations: Psurf, Tsurf,')
 
     else:
@@ -473,19 +490,20 @@ for iDay in range(Ndays):
     
     LWC_obs           = Ze_lin
 #    LWC_obs           = LWC_obs_res.values.transpose()
-    cloudDict_obs     = f_calculateAllCloudQuantities(cloudnet_res, \
+    cloudDict_obs, clouds_obs, PBLclouds_obs     = f_calculateAllCloudQuantities(cloudnet_res, \
                                                       datetime_ICON, \
                                                       height_ICON, \
                                                       LWP_obs_res, \
                                                       LWC_obs, \
-                                                      cloudTimeArray, \
+                                                      humanInfo, \
                                                       Hwind_obs_res.values.transpose(), \
                                                       w_obs_res.values.transpose(),\
                                                       int(yy), \
                                                       int(dd), \
                                                       int(mm), \
                                                       QiThreshold, \
-                                                      QcThreshold,\
+                                                      QcThreshold, \
+                                                      distMinClouds, \
                                                       iconLemData, \
                                                       device, \
                                                       verboseFlag, \
@@ -494,8 +512,11 @@ for iDay in range(Ndays):
     if device == 'obs':
         print('shape of meanHeight out of the function')
         print(np.shape(cloudDict_obs['meanheightFromCB']))
-        
-#CloudInfo, time, height, LWP, LWC, Hwind, Wwind, yy, dd, mm, QiThreshold, QcThreshold, iconLemData, device, verboseFlag):
+
+    print('dimensione time in cloudDict', len(cloudDict_obs['timeSerie']))
+    print('dimensione CB in clouddict', len(cloudDict_obs['cloudBase']))
+
+    #CloudInfo, time, height, LWP, LWC, Hwind, Wwind, yy, dd, mm, QiThreshold, QcThreshold, iconLemData, device, verboseFlag):
     # iconlem
     device            = 'iconlem' 
     w_iconlem         = iconLemData.groups['Temp_data'].variables['vertWind'][:].copy()
@@ -504,12 +525,12 @@ for iDay in range(Ndays):
     LWC_iconlem[LWC_iconlem < QcThreshold] = np.nan
     Hwind_iconlem     = iconLemData.groups['Temp_data'].variables['windSpeed'][:].copy()
     
-    cloudDict_iconlem = f_calculateAllCloudQuantities(cloudMask_ICON, \
+    cloudDict_iconlem, clouds_iconlem, PBLclouds_iconlem = f_calculateAllCloudQuantities(cloudMask_ICON, \
                                                       datetime_ICON, \
                                                       height_ICON, \
                                                       LWP_iconlem, \
                                                       LWC_iconlem, \
-                                                      cloudTimeArray, \
+                                                      humanInfo, \
                                                       Hwind_iconlem, \
                                                       w_iconlem,\
                                                       int(yy), \
@@ -717,7 +738,7 @@ for iDay in range(Ndays):
                      dict_surface_fluxes]
     fileOutPickle = pathOut+'dataset_PBLcloudPaper_ModObs_'+date+'.p'
     outfile       = open(fileOutPickle,'wb')
-    pickle.dump(outputArray,outfile)
+    pickle.dump(outputArray,clouds_obs, PBLclouds_obs, clouds_iconlem, PBLclouds_iconlem, outfile)
     outfile.close()
     #with open(pathOut+'dataset_PBLcloudPaper_ModObs_'+date+'.p', 'wb') as fp:
     #    pickle.dump(radiosondeList, tower_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)

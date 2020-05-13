@@ -37,64 +37,241 @@ def f_selectingPBLcloudWindow(date):
         - version2: selects boundary layer clouds with cloud base below 2500 mt and cloud tops below 
         CB+600mt.
     """
+    if date == '20130414':
+        timeStart   = datetime.datetime(2013,4,14,6,0,0)
+        timeEnd     = datetime.datetime(2013,4,14,23,59,59)
+        PBLheight   = 2500.
+    if date == '20130420':
+        timeStart   = datetime.datetime(2013,4,20,6,0,0)
+        timeEnd     = datetime.datetime(2013,4,20,23,59,59)
+        PBLheight   = 2000.
     if date == '20130424':
-        timeStart   = datetime.datetime(2013,4,24,0,0,0)
+        timeStart   = datetime.datetime(2013,4,24,6,0,0)
         timeEnd     = datetime.datetime(2013,4,24,23,59,59)
-        cbctkeyword = 'version2'
+        PBLheight   = 2000.
     if date == '20130425':
-        timeStart   = datetime.datetime(2013,4,25,0,0,0)
-        timeEnd     = datetime.datetime(2013,4,25,23,0,0)
-        cbctkeyword = 'minmax'
+        timeStart   = datetime.datetime(2013,4,25,6,0,0)
+        timeEnd     = datetime.datetime(2013,4,25,23,59,59)
+        PBLheight   = 5000.
+    if date == '20130426':
+        timeStart   = datetime.datetime(2013,4,26,6,0,0)
+        timeEnd     = datetime.datetime(2013,4,26,23,59,59)
+        PBLheight   = 5000.
     if date == '20130427':
-        timeStart   = datetime.datetime(2013,4,27,5,30,0)
-        timeEnd     = datetime.datetime(2013,4,27,16,0,0)
-        cbctkeyword = 'version2'
+        timeStart   = datetime.datetime(2013,4,27,6,0,0)
+        timeEnd     = datetime.datetime(2013,4,27,23,59,59)
+        PBLheight   = 3000.
+    if date == '20130428':
+        timeStart   = datetime.datetime(2013,4,28,6,0,0)
+        timeEnd     = datetime.datetime(2013,4,28,23,59,59)
+        PBLheight   = 3500.
     if date == '20130429':
-        timeStart   = datetime.datetime(2013,4,29,4,0,0)
-        timeEnd     = datetime.datetime(2013,4,29,22,0,0)
-        cbctkeyword = 'minmax'
+        timeStart   = datetime.datetime(2013,4,29,6,0,0)
+        timeEnd     = datetime.datetime(2013,4,29,23,59,59)
+        PBLheight   = 3000.
+    if date == '20130430':
+        timeStart   = datetime.datetime(2013,4,30,6,0,0)
+        timeEnd     = datetime.datetime(2013,4,30,23,59,59)
+        PBLheight   = 3000.
     if date == '20130501':
-        timeStart   = datetime.datetime(2013,5,1,4,0,0)
-        timeEnd     = datetime.datetime(2013,5,1,16,30,0)
-        cbctkeyword = 'minmax'
+        timeStart   = datetime.datetime(2013,5,1,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,1,23,59,59)
+        PBLheight   = 2500.
     if date == '20130502':
-        timeStart   = datetime.datetime(2013,5,2,0,0,0)
-        timeEnd     = datetime.datetime(2013,5,2,22,0,0)
-        cbctkeyword = 'minmax'
+        timeStart   = datetime.datetime(2013,5,2,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,2,23,59,59)
+        PBLheight   = 4000.
     if date == '20130503':
         timeStart   = datetime.datetime(2013,5,3,6,0,0)
-        timeEnd     = datetime.datetime(2013,5,3,18,0,0)
-        cbctkeyword = 'version2'
+        timeEnd     = datetime.datetime(2013,5,3,23,59,59)
+        PBLheight   = 3000.
     if date == '20130504':
-        timeStart   = datetime.datetime(2013,5,4,0,0,0)
+        timeStart   = datetime.datetime(2013,5,4,6,0,0)
         timeEnd     = datetime.datetime(2013,5,4,23,59,59)
-        cbctkeyword = 'minmax'
+        PBLheight   = 2500.
     if date == '20130505':
         timeStart   = datetime.datetime(2013,5,5,6,0,0)
         timeEnd     = datetime.datetime(2013,5,5,23,59,59)
-        cbctkeyword = 'minmax'
+        PBLheight   = 2500.
     if date == '20130506':
         timeStart   = datetime.datetime(2013,5,6,6,0,0)
         timeEnd     = datetime.datetime(2013,5,6,23,59,59)
-        cbctkeyword = 'version2'
+        PBLheight   = 3000.
     if date == '20130509':
         timeStart   = datetime.datetime(2013,5,9,6,0,0)
         timeEnd     = datetime.datetime(2013,5,9,23,59,59)
-        cbctkeyword = 'minmax'
+        PBLheight   = 3000.
     if date == '20130510':
         timeStart   = datetime.datetime(2013,5,10,6,0,0)
         timeEnd     = datetime.datetime(2013,5,10,23,59,59)
-        cbctkeyword = 'minmax'
+        PBLheight   = 3000.
     if date == '20130518':
         timeStart   = datetime.datetime(2013,5,18,6,0,0)
-        timeEnd     = datetime.datetime(2013,5,18,16,0,0)
-        cbctkeyword = 'minmax'
-    
-        
+        timeEnd     = datetime.datetime(2013,5,18,23,59,59)
+        PBLheight   = 2500.
+    if date == '20130524':
+        timeStart   = datetime.datetime(2013,5,24,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,24,23,59,59)
+        PBLheight   = 4500.
+    if date == '20130525':
+        timeStart   = datetime.datetime(2013,5,25,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,25,23,59,59)
+        PBLheight   = 3000.
+    if date == '20130527':
+        timeStart   = datetime.datetime(2013,5,27,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,27,23,59,59)
+        PBLheight   = 3000.
+    if date == '20130528':
+        timeStart   = datetime.datetime(2013,5,28,6,0,0)
+        timeEnd     = datetime.datetime(2013,5,28,23,59,59)
+        PBLheight   = 4000.
+
+        dictOut = {'timeStart':timeStart, 'timeEnd':timeEnd, 'heightPBL':PBLheight}
 #,'20130504', '20130505','20130506','20130509','20130510'
-    return(timeStart,timeEnd, cbctkeyword)
+# '20130414','20130420', '20130426','20130428', '20130430','20130524','20130525','20130527', '20130528'
+    return(dictOut)
     
-    
+#-------------------------------------------------------------------------------------
+
+
+def f_calculateCloudBaseTopThickness(cloudMask, time, height, humanInfo):
+    """
+    date : wednesday 13 may 2020
+    author: Claudia Acquistapace
+    goal: build a function to identify all cloud base and cloud top of clouds in the vertical profile at the same time.
+    Human observations for the day distinguish manually PBL from non-PBL clouds. An additional dataset of
+     PBL clouds is delivered based on this information.
+    Concept of the code:
+    step 1: given the cloud mask, find all cloud base and cloud tops.
+    step 2: build cloud database with all clouds saved as xarray dataset
+    step 3: identify cloud properties of PBL clouds using timeStart, timeEnd, MaxCTheight
+    input: cloudmask,
+            time,
+            height,
+            humanInfo (dictionary including timeStart, timeEnd, PBLheight from human obs on the day)
+    output: AllCloudDataset (xarray Dataset including cloud base, cloud top, cloud thickness, level number)
+            PBLcloudDataset (xarray Dataset for PBL clouds with cloud base, cloud top, cloud thickness, level number)
+    """
+    dimTime   = len(time)
+    dimHeight = len(height)
+    heightPBL = humanInfo['heightPBL']
+    timeStart = humanInfo['timeStart']
+    timeEnd   = humanInfo['timeEnd']
+
+    # STEP 1: identifying all cloud bases and tops
+    # ---------------------------------------------------
+    # converting cloud mask to 1 / 0 matrices
+    BinaryMatrix = np.zeros((dimTime, dimHeight))
+    for itime in range(dimTime):
+        for iH in range(dimHeight):
+            if cloudMask[itime, iH] != 0.:
+                BinaryMatrix[itime, iH] = 1
+
+    # calculating gradient of binary cloud mask
+    gradBinary = np.diff(BinaryMatrix, axis=1)
+
+    # counting max number of cloud base/cloud top found
+    numberCB = []
+    numberCT = []
+    for itime in range(dimTime):
+        column = gradBinary[itime, :]
+        numberCB.append(len(np.where(column == -1.)[0][:]))
+        numberCT.append(len(np.where(column == 1.)[0][:]))
+
+    NCB = max(numberCB)
+    NCT = max(numberCT)
+
+    # generating cloud base and cloud top arrays
+    CBarray = np.zeros((dimTime, NCB))
+    CBarray.fill(np.nan)
+    CTarray = np.zeros((dimTime, NCT))
+    CTarray.fill(np.nan)
+    NlayersArray = np.zeros((dimTime))
+    NlayersArray.fill(np.nan)
+
+    # if no cloud bases or no cloud tops are found, then CB and CT are assigned to nan
+    if (NCB == 0) or (NCT == 0):
+        CBarray[iTime, :] = np.nan
+        CTarray[iTime, :] = np.nan
+    else:
+        # if some cloud base / cloud tops are found, all the found values are stored
+        # storing cloud base and cloud top arrays
+        for iTime in range(dimTime):
+            column = gradBinary[iTime, :]
+            indCB = np.where(column == -1.)[0][:]
+            NfoundCB = len(indCB)
+            indCT = np.where(column == 1.)[0][:]
+            NfoundCT = len(indCT)
+            CBarray[iTime, 0:NfoundCB] = height[indCB]
+            CTarray[iTime, 0:NfoundCT] = height[indCT]
+            NlayersArray[iTime] = numberCB[iTime]
+
+    # calculating cloud thickness based on the cloud base and tops found ( 2d array (time, Nlevels))
+    cloudThicknessDatabase = CTarray - CBarray
+    # generating array of levels
+    levels = np.arange(NCB)
+
+    # step 2: build cloud database with all clouds saved as xarray dataset
+    clouds = xr.Dataset(
+        data_vars = {'cloudBase' : (('time', 'levels'), CBarray),
+                     'cloudTop'  : (('time', 'levels'), CTarray),
+                     'cloudThick': (('time', 'levels'), cloudThicknessDatabase)},
+        coords    = {'levels': levels,
+                     'time'  : time})
+
+    # step 3: identify cloud properties of PBL clouds using timeStart, timeEnd, MaxCTheight
+    cloudsTimeWindow = clouds.sel(time=slice(timeStart, timeEnd))
+    PBLclouds = cloudsTimeWindow.where(cloudsTimeWindow.cloudTop < heightPBL, drop=True)
+
+
+    return(clouds, PBLclouds)
+
+
+#---------------------------------------------------------------------------------
+
+
+def f_resampleArrays2StandardData(A, index, strDate):
+    """
+    author : Claudia Acquistapace
+    date   : 10/04/2020
+    goal   : resample data with some misssing times (matrices of dimT < 9600) to the standard size (9600,150)
+    input  : matrix of data to resize, datetime_array, height_array
+    output : ndarray of resampled matrix with nans wherever missing data are located
+
+    """
+    import numpy as np
+    import pandas as pd
+
+    DF = pd.Series(A, index=index)
+    # I first construct my regular time index every 9s
+    # Obviously I put a little more periods (entire day would be 9600)
+    index = pd.date_range(strDate, periods=9600, freq='9s')
+    # There you go, by default missing values should be NaN
+    DFresampled = DF.loc[index]
+    return(DFresampled.values)
+#---------------------------------------------------------------------------------
+
+
+def f_resample2StandardData(A, index, cols, strDate):
+    """
+    author : Claudia Acquistapace
+    date   : 10/04/2020
+    goal   : resample data with some missing times (matrices of dimT < 9600) to the standard size (9600,150)
+    input  : matrix of data to resize, datetime_array, height_array
+    output : ndarray of resampled matrix with nans wherever missing data are located
+
+    """
+    import numpy as np
+    import pandas as pd
+
+    DF = pd.DataFrame(A, index=index, columns=cols)
+    # I first construct my regular time index every 9s
+    # Obviously I put a little more periods (entire day would be 9600)
+    index = pd.date_range(strDate, periods=9600, freq='9s')
+    # There you go, by default missing values should be NaN
+    DFresampled = DF.loc[index]
+    return(DFresampled.values)
+
     
 #aa
 # closest function
@@ -270,10 +447,10 @@ def f_calcCloudBaseTop(cloudMask, dimTime, dimHeight, height):
 def f_calcCloudBaseTopPBLclouds(cloudMask, dimTime, dimHeight, height, cloudTimeArray, time):
     # cloud mask for identifying cloud base and cloud top of PBL clouds
 
-    
+    #CloudMaskCut = cloudMask
     # filtering clouds above 5000mt
-    ind_above = np.where(height > 5000.)
-    cloudMask[:, ind_above] = 0.
+    # ind_above = np.where(height > 5000.)
+    #CloudMaskCut[:, ind_above] = 0.
     
     
     # converting cloud mask to 1 / 0 matrices
@@ -396,8 +573,9 @@ def f_calcCloudBaseTopPBLcloudsV2(cloudMask, dimTime, dimHeight, height, cloudTi
     # cloud mask for identifying cloud base and cloud top of PBL clouds
 
     # filtering clouds above 5000mt
-    ind_above = np.where(height > 5000.)
-    cloudMask[:, ind_above] = 0.
+    #cloudMaskCut = cloudMask
+    #ind_above = np.where(height > 5000.)
+    #cloudMaskCut[:, ind_above] = 0.
     
     
     # converting cloud mask to 1 / 0 matrices
@@ -575,9 +753,34 @@ def f_calculateCloudFractionICON(QI, QC, yy, mm, dd, time, height, QiThreshold, 
                 }
     
     return(dict_CF)
-    
-    
-    
+
+
+def f_plotTest(matrix, time, height, figname):
+    pathFig = '/work/cacquist/HDCP2_S2/statistics/figs/patch003/figures_JAMES/'
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+    matplotlib.rc('xtick', labelsize=10)  # sets dimension of ticks in the plots
+    matplotlib.rc('ytick', labelsize=10)  # sets dimension of ticks in the plots
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
+    cax = ax.pcolormesh(time, height, matrix, vmin=0, vmax=3,
+                        cmap=plt.cm.get_cmap("GnBu", 4))
+    ax.set_ylim(0., 15000)  # limits of the y-axes
+    # ax.set_xlim(timeStart, timeEnd)  # limits of the x-axes
+    ax.set_title("cloud mask model", fontsize=10)
+    ax.set_xlabel("time [hh:mm]", fontsize=10)
+    ax.set_ylabel("height [m]", fontsize=10)
+    cbar = fig.colorbar(cax, ticks=[0, 1, 2, 3], orientation='vertical', aspect=10)
+    cbar.ticks = ([0, 1, 2, 3])
+    cbar.ax.set_yticklabels(['no cloud', 'liquid', 'ice', 'mixed phase'])
+    cbar.set_label(label="cloud type", size=10)
+    cbar.ax.tick_params(labelsize=10)
+    plt.tight_layout()
+    plt.savefig(pathFig + figname + '_cloudMask.png')
+    return ()
 
 
 
@@ -1007,7 +1210,6 @@ def f_cloudmask(time,height,Qc,Qi,QiThreshold,QcThreshold):
     # = 1 : liquid clouds
     # = 2 : ice clouds
     # = 3 : mixed phase clouds
-    print(np.shape(Qi))
 
     for iTime in range(dimTime):
         for iHeight in range(dimHeight):
@@ -1472,15 +1674,24 @@ def f_processRadiosondesDay(fileList, yy, mm, dd):
     # names of the variables in the radiosondes profiles
     cols                   = ['Zeit [min:sec]','P [hPa]','T [C]','U [%]','Wind speed [m/s]','Wdir [inf]','Lange [inf]'\
                               ,'Breite [inf]','Hˆhe [m]','Geo Pot [m]', 'dew [C]', 'Tv [C]','Rs [m/s]', 'D [kg/m3]' \
-                              ,'Azimut []','Elevation []','Entfernung [m]']
+                               ,'Azimut []','Elevation []','Entfernung [m]']
+    cols2                  = ['Zeit [min:sec]','P [hPa]','T [C]','U [%]','Wind speed [m/s]','Wdir [inf]','Lange [inf]'\
+                              ,'Breite [inf]','Hˆhe [m]','Geo Pot [m]', 'dew [C]', 'Tv [C]','Rs [m/s]', 'D [kg/m3]']
     Nfiles                 = len(fileList)
     RadiosondesData       = []
     for iFile in range(Nfiles):
-        
+        dayFile            = fileList[iFile][44:52]
+        print(dayFile)
         hourFile           = int(fileList[iFile][52:54])
         DatetimeRadiosonde = datetime.datetime(int(yy), int(mm), int(dd), hourFile, 0, 0)
-        
-        DF                 = pd.read_csv(fileList[iFile], sep='\t', skipinitialspace=True, \
+
+        if dayFile == '20130414':
+            print('def correct for 14 columns')
+            DF                 = pd.read_csv(fileList[iFile], sep='\t', skipinitialspace=True, \
+                                         encoding='latin_1', names=cols2, header=0, dtype={'Hˆhe [m]':str})
+        else:
+            print('def correct for 17 columns')
+            DF                 = pd.read_csv(fileList[iFile], sep='\t', skipinitialspace=True, \
                                          encoding='latin_1', names=cols, header=0, dtype={'Hˆhe [m]':str})
         DF[DF.columns] = DF[DF.columns].apply(pd.to_numeric, errors='coerce')    
         
@@ -1900,7 +2111,7 @@ def f_calculateAllCloudQuantities(CloudInfo, \
                                   height, \
                                   LWP, \
                                   LWC, \
-                                  cloudTimeArray, \
+                                  humanInfo, \
                                   Hwind, \
                                   Wwind, \
                                   yy, \
@@ -1908,6 +2119,7 @@ def f_calculateAllCloudQuantities(CloudInfo, \
                                   mm, \
                                   QiThreshold, \
                                   QcThreshold, \
+                                  distMinClouds, \
                                   iconLemData, \
                                   device, \
                                   verboseFlag, \
@@ -1961,13 +2173,13 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     from myFunctions import f_calculateCloudProperties
     from cloudnetFunctions import f_calculateCloudFractionCloudnet
     from cloudnetFunctions import f_calculateCloudMaskCloudnet 
-    
+    from myFunctions import f_plotTest
     date = str(yy)+str(mm)+str(dd)
         
     # checking if the input is model or observations: in this case calculation 
     # of CB, CT, cloud fraction, cloud mask, reassignement of the variable LWC 
     # to ZE_lin as it really is, filtering Ze between cloud base and cloud top 
-    # and calculating corresponding LWC profile for each CB?CT identified
+    # and calculating corresponding LWC profile for each CB/CT identified
     if device == 'obs':
         
         stringData     = 'obs'
@@ -1975,26 +2187,15 @@ def f_calculateAllCloudQuantities(CloudInfo, \
         CategoryCN_res    = CloudInfo.data
         cloudMask         = f_calculateCloudMaskCloudnet(time, height, \
                                         CategoryCN_res.transpose().astype(int))
+        #PLOTDONE1 = f_plotTest(cloudMask.transpose(), time, height, 'pre_call')
         # calculating 30 min mean profiles of cloud fraction for observations
         cloudFraction     = f_calculateCloudFractionCloudnet(CategoryCN_res,\
                                                 yy, mm, dd, time, height)
         Ze_lin            = LWC
 
-        # calculating cloud base and cloud top for PBL clouds
-        if (cloudTimeArray[2] == 'minmax'):
-            result                 = f_calcCloudBaseTopPBLclouds(cloudMask, len(time), \
-                                                        len(height), height, cloudTimeArray, time)
-        else:
-            result                 = f_calcCloudBaseTopPBLcloudsV2(cloudMask, len(time), \
-                                                        len(height), height, cloudTimeArray, time)
+        # calculating cloud base , cloud top and cloud thickness for all clouds and for pbl clouds
+        clouds, PBLclouds = f_calculateCloudBaseTopThickness(cloudMask, time, height, humanInfo)
 
-        CT_array          = np.empty(len(time))
-        CB_array          = np.empty(len(time))
-        CT_array[:]       = np.nan
-        CB_array[:]       = np.nan
-        CB_array          = result[3]
-        CT_array          = result[4]
-        NcloudLayers      = result[2]
         
         # filtering Ze linear between cloud base and cloud top 
         for indT in range(len(time)):
@@ -2024,17 +2225,17 @@ def f_calculateAllCloudQuantities(CloudInfo, \
                   removed values of Ze for clouds excluded from the data')
             print('calculating LWC with Frisch approach from Ze for observations')
     
-    # check if input is from model: in that case, reads CB/CT calculated, Qc, Qi, 
-    #calculates cloud fraction, cloud mask, 
+    # check if input is from model
     if device == 'iconlem':
         stringData     = 'iconlem'
         Qi             = iconLemData.groups['Temp_data'].variables['Qi'][:].copy()
         Qc             = iconLemData.groups['Temp_data'].variables['Qc'][:].copy()
-        CB_array       = iconLemData.groups['Temp_data'].variables['cloudBasePBL'][:].copy()
-        CT_array       = iconLemData.groups['Temp_data'].variables['cloudTopPBL'][:].copy()
-        NcloudLayers   = iconLemData.groups['Temp_data'].variables['NcloudLayers'][:].copy()
         # calculating cloud mask
         cloudMask      = f_cloudmask(time,height,Qc,Qi,QiThreshold,QcThreshold)
+
+        # calculating cloud base , cloud top and cloud thickness for all clouds and for pbl clouds
+        clouds, PBLclouds = f_calculateCloudBaseTopThickness(cloudMask, time, height, humanInfo)
+
         # calculating 30 min mean profiles of cloud fraction for ICON-LEM
         cloudFraction  = f_calculateCloudFractionICON(Qi, Qc, \
                         yy, mm, dd, time, height, QiThreshold, QcThreshold)
@@ -2051,30 +2252,27 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     mean_CF_liquid = cloudFraction['LiquidCloudFraction']
     mean_CF_ice    = cloudFraction['IceCloudFraction'] 
     mean_CF_tot    = cloudFraction['TotalCloudFraction'] 
-    datetime_CF    = cloudFraction['time'] 
-    
-    # calculating cloud thickness and cloud maturity (T(CB)-T(CT))
-    # the meaning is >> 0 : very convective cloud (young)
-    #                 ~ 0: diluted cloud without buoyancy (old)
-    cloudThickness = CT_array - CB_array
+    datetime_CF    = cloudFraction['time']
     
     # updraft speed at cloud base
-    UpdraftCB = np.zeros(len(CB_array))
+    UpdraftCB = np.zeros(len(time))
+
     UpdraftCB.fill(np.nan)
-    for indT in range(len(CB_array)):
-        if (~np.isnan(CB_array[indT])):
-            indCB               = f_closest(height, CB_array[indT])
+    for indT in range(len(time)):
+        minCB = np.min(PBLclouds.cloudBase[indT,:])
+        if (~np.isnan(minCB)):
+            indCB               = f_closest(height, minCB)
             UpdraftCB[indT]     = Wwind[indT,indCB]
 
     # calculation of cloud duration, chord length, mass flux and mean LWP for each cloud unit identified
     Dict_Clouds_arr  = f_calculateCloudProperties(time, \
                                                   height, \
-                                                  CB_array, \
-                                                  CT_array, \
+                                                  PBLclouds, \
                                                   UpdraftCB, \
                                                   LWP, \
                                                   Hwind, \
                                                   Wwind, \
+                                                  distMinClouds, \
                                                   LWC)
 
     duration           = []
@@ -2147,9 +2345,7 @@ def f_calculateAllCloudQuantities(CloudInfo, \
     # is given by the number of clouds found in the day
     dictOut = {}
     dictOut = {'cloudMask':cloudMask, 
-               'cloudBase':CB_array,
-               'cloudTop':CT_array, 
-               'Ncloudlayers':NcloudLayers,
+               'timeSerie':time,
                'liquidCloudFraction':mean_CF_liquid,
                'iceCloudFraction':mean_CF_ice, 
                'totalCloudFraction':mean_CF_tot, 
@@ -2166,17 +2362,13 @@ def f_calculateAllCloudQuantities(CloudInfo, \
                'massFlux':massFlux, 
                'timeCloudStart':cloudTimeStart, 
                'timeCloudEnd':cloudTimeEnd,
-               'cloudThickness':meanCloudThickness,
                'cloudUpdraftCB':meanUpdraftCB,
                'Nclouds':Nclouds,
                'LWPall':LWP,
-               'cloudThicknessAll':cloudThickness, 
-               'UpdraftCBAll':UpdraftCB, 
+               'UpdraftCB_PBL':UpdraftCB,
             }
-    if device == 'obs':
-        print('shape of meanHeight inside the function')
-        print(np.shape(meanheightFromCB))
-    return(dictOut)
+
+    return(dictOut, clouds, PBLclouds)
 
 
 
@@ -2197,12 +2389,12 @@ def f_calculateAllCloudQuantities(CloudInfo, \
 #--------------------------------------------------------------------------------
 def f_calculateCloudProperties(datetime_ICON, \
                                height_ICON, \
-                               CB_array_ICON, \
-                               CT_array_ICON, \
+                               PBLclouds, \
                                UpdraftCB, \
                                LWP_ICON, \
                                Hwind_ICON, \
                                w_ICON, \
+                               distMinClouds, \
                                LWC):
     """ 
     @ author: cacquist
@@ -2214,12 +2406,12 @@ def f_calculateCloudProperties(datetime_ICON, \
     @ INPUT : 
         datetime_ICON: time array
         height_ICON  : height array
-        CB_array_ICON: clodu base time serie
-        CT_array_ICON: cloud top time serie
+        PBLclouds    : xarray dataset containing PBl cloud bases, tops, and thicknesses
         UpdraftCB    : updraft velocity at cloud base time serie
         LWP_ICON     : LWP time serie
         Hwind_ICON   : Horizontal wind matrix (time, height)
         w_ICON       : vertical wind matrix (time, height)
+        distMinClouds: minimum height distance between a cloud base and the subsequent one to consider the two cloud bases belonging to the same cloud
         LWC          : liquid water content / Qc matrix (time, height)
     @ OUTPUT: 
         one dictionary for each cloud unit. Each dictionary contains:
@@ -2242,16 +2434,27 @@ def f_calculateCloudProperties(datetime_ICON, \
     LWC[LWC == 0]   = np.nan   # setting to nans null values for better averaging
     cloudStart      = 0
     Dict_Clouds_arr = []
+
+
     
     # assigning starting and ending time of cloudy intervals considered continuous clouds
-    for itime in range(len(datetime_ICON)):
-        
-        if (np.isnan(CB_array_ICON[itime]) == False) * (cloudStart == 0): #cb found, cloud not started yet
+    CBarr = np.zeros(len(datetime_ICON))
+    CBarr.fill(np.nan)
+    CTarr = np.zeros(len(datetime_ICON))
+    CTarr.fill(np.nan)
+    for itime in range(len(datetime_ICON)-1):
+        minCB = np.nanmin(PBLclouds.cloudBase[itime, :])
+        CBarr[itime] = minCB
+        indexLevelMin = np.nanargmin(PBLclouds.cloudBase[itime, :])
+        CTarr[itime] = PBLclouds.cloudTop[itime, indexLevelMin]
+        minCBnext = f_closest(PBLclouds.cloudBase[itime+1, :], minCB)
+        distCB = abs(minCBnext - minCB)
+        if (np.isnan(minCB) == False) * (cloudStart == 0): #cb found, cloud not started yet
             cloudStart = 1
             timeStart  = datetime_ICON[itime]
             indStart   = itime
-        # if cb found and cloudstart =1, loop does not do anything: this corresponds to the cloudy part
-        if (np.isnan(CB_array_ICON[itime]) == True) * (cloudStart == 1): # se Cb not found, \
+        # if cb found and cloudstart =1 and cb next is within 50 m from previous cb, loop does not do anything: this corresponds to the cloudy part
+        if ((np.isnan(minCB) == True) * (cloudStart == 1)) or (distCB > distMinClouds): # se Cb not found, \
             #and cloudstart =1 (comes from a cloud), then it saves the previous time step as timeEnd \
             # and puts to zero the cloud flag again, ready for a new cloud. Saves time indeces and values in the dictionary
             # and sets timestart and end to nans
@@ -2266,13 +2469,16 @@ def f_calculateCloudProperties(datetime_ICON, \
             
     # filtering LWC profiles below CB and above cloud top to nans
     for itime in range(len(datetime_ICON)):
-        if ((~np.isnan(CB_array_ICON[itime])) or (~np.isnan(CT_array_ICON[itime]))): 
+        minCB = np.nanmin(PBLclouds.cloudBase[itime, :])
+        maxCT = np.nanmax(PBLclouds.cloudTop[itime, :])
+        #if ((~np.isnan(minCB)) or (~np.isnan(maxCT))):
+        if ((~np.isnan(minCB)) * (~np.isnan(maxCT))):
             #fig, ax          = plt.subplots(figsize=(4,4))
             #plt.plot(height_ICON, LWC[itime,:], label='before', color='red')
             LWC_prof_DF              = pd.Series(LWC[itime,:], index=height_ICON)
-            mask_CB                  = (LWC_prof_DF.index < CB_array_ICON[itime]) 
+            mask_CB                  = (LWC_prof_DF.index < minCB)
             LWC_prof_DF.loc[mask_CB] = np.nan
-            mask_CT                  = (LWC_prof_DF.index > CT_array_ICON[itime])
+            mask_CT                  = (LWC_prof_DF.index > maxCB)
             LWC_prof_DF.loc[mask_CT] = np.nan
             LWC[itime,:]             = LWC_prof_DF.values
             #plt.plot(height_ICON, LWC[itime,:], label='after', color='blue', linestyle=':')
@@ -2298,7 +2504,6 @@ def f_calculateCloudProperties(datetime_ICON, \
         iTimeEnd           = Dict_Clouds_arr[iCloud]['indEnd']
         meanLWP            = np.nanmedian(LWP_ICON[iTimeStart:iTimeEnd])
         stdLWP             = np.nanstd(LWP_ICON[iTimeStart:iTimeEnd])
-        stdCB              = np.nanstd(CB_array_ICON[iTimeStart:iTimeEnd])
         meanLWC            = np.nanmean(LWC[iTimeStart:iTimeEnd,:], axis=0)
         meanUpdraftCBspeed = np.nanmedian(UpdraftCB[iTimeStart:iTimeEnd])
         stdUpdraftCBspeed  = np.nanstd(UpdraftCB[iTimeStart:iTimeEnd])
@@ -2306,8 +2511,8 @@ def f_calculateCloudProperties(datetime_ICON, \
         
         # finding max and min height where LWC array is non null: check the number of non nan elements
         if (np.count_nonzero(~np.isnan(meanLWC)) != 0):
-            meanCB           = height_ICON[np.nanmax(np.where(~np.isnan(meanLWC)))]
-            meanCT           = height_ICON[np.nanmin(np.where(~np.isnan(meanLWC)))]
+            meanCB           = np.nanmean(CBarr[iTimeStart:iTimeEnd])
+            meanCT           = np.nanmean(CTarr[iTimeStart:iTimeEnd])
             # calculating cloud properties 
             HwindCloudBase   = np.nanmean(Hwind_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)])
             WwindCloudBase   = np.nanmean(w_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)+1])
@@ -2318,8 +2523,8 @@ def f_calculateCloudProperties(datetime_ICON, \
             cloudThickness   = meanCT - meanCB
         else:
             if (len(CB_array_ICON[iTimeStart:iTimeEnd]) != 0):
-                meanCB           = np.nanmin(CB_array_ICON[iTimeStart:iTimeEnd])
-                meanCT           = np.nanmax(CT_array_ICON[iTimeStart:iTimeEnd])
+                meanCB           = np.nanmean(CBarr[iTimeStart:iTimeEnd])
+                meanCT           = np.nanmean(CTarr[iTimeStart:iTimeEnd])
                 HwindCloudBase   = np.nanmean(Hwind_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)])
                 WwindCloudBase   = np.nanmean(w_ICON[iTimeStart:iTimeEnd, f_closest(height_ICON, meanCB)+1])
                 chordLength      = HwindCloudBase * duration.total_seconds()

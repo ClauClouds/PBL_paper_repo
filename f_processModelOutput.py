@@ -15,7 +15,8 @@ Created on Tue Jul 16 16:18:01 2019
 # ------------------------------------------------------------------------
 # date      : 12.04.2018
 # author    : Claudia Acquistapace
-# goal      : routine to read 1D meteogram for a given date and site ( Joyce ) and extract data for the site and also level2 variables for the site Store them in a ncdf file to be copied on ostro for comparison 1to1 with observations from the ground
+# goal      : routine to read 1D meteogram for a given date and site ( Joyce ) and extract data for the site and also
+# level2 variables for the site Store them in a ncdf file to be copied on ostro for comparison 1to1 with observations from the ground
 # DAYS WITH BOUNDARY LAYER CLOUDS OF INTEREST:
 # - 20130502 (folder 20130502-default )
 # - 20130505 (folder 20130505-default-redone_v1) 
@@ -56,7 +57,7 @@ def f_processModelOutput(path_icon, \
                          iconFilename, \
                          modelInputParameters, \
                          date, \
-                         cloudTimeArray, \
+                         humanInfo, \
                          debuggingFlag, \
                          verboseFlag, \
                          pathDebugFig, \
@@ -93,10 +94,10 @@ def f_processModelOutput(path_icon, \
     SHFL          = data.variables['SHFL'][:].copy() # sensible heat flux (surface)
     TempSurf      = data.variables['T_S'][:]
 
-    print(Hsurf)
-    print(height2[-1])
-    print(height2[0])
-    print(len(height2))
+    #print(Hsurf)
+    #print(height2[-1])
+    #print(height2[0])
+    #print(len(height2))
     # subtracting from model height arrays the height of the ground level at JOYCE
     # and make it comparable with the observations
     height2 = height2 - np.repeat(Hsurf, len(height2))
@@ -190,31 +191,7 @@ def f_processModelOutput(path_icon, \
     QcThreshold            = modelInputParameters['QcThresholdVar']
     QiThreshold            = modelInputParameters['QiThresholdVar']
     cloudMask              = f_cloudmask(time,height2,Qc,Qi,QiThreshold,QcThreshold)
-    if (cloudTimeArray[2] == 'minmax'):
-        result                 = f_calcCloudBaseTopPBLclouds(cloudMask, len(datetime_ICON), \
-                                                    len(height2), height2, cloudTimeArray, datetime_ICON)
-    else:
-        result                 = f_calcCloudBaseTopPBLcloudsV2(cloudMask, len(datetime_ICON), \
-                                                    len(height2), height2, cloudTimeArray, datetime_ICON)
-    # return (CBarray, CTarray, NlayersArray, CB_collective, CT_collective)
-    #CBMatrix_ICON          = result[0]
-    #CTMatrix_ICON          = result[1]
-    CT_array_ICON          = np.empty(len(datetime_ICON))
-    CB_array_ICON          = np.empty(len(datetime_ICON))
-    CT_array_ICON[:]       = np.nan
-    CB_array_ICON[:]       = np.nan
-    NcloudLayers           = result[2]
-    CB_array_ICON[:]       = result[5]
-    CT_array_ICON[:]       = result[6]
-    CT_PBL          = np.empty(len(datetime_ICON))
-    CB_PBL          = np.empty(len(datetime_ICON))
-    CT_PBL[:]       = np.nan
-    CB_PBL[:]       = np.nan
-    CB_PBL[:]       = result[3]
-    CT_PBL[:]       = result[4]
-    print(CB_PBL)
-    print(CT_PBL)
-    print('*************************************************')
+
 # =============================================================================
 #     
 #     for indT in range(len(datetime_ICON)):#
@@ -513,11 +490,7 @@ def f_processModelOutput(path_icon, \
     varLTS                = tempgrp.createVariable('LTS', 'f4', 'dimT')
     varPBLheight          = tempgrp.createVariable('PBLHeightArrRN', 'f4', 'dimT')
     varPBLheight2         = tempgrp.createVariable('PBLHeightArrTW', 'f4', 'dimT')
-    varCBheight           = tempgrp.createVariable('cloudBase', 'f4', 'dimT')
-    varCTheight           = tempgrp.createVariable('cloudTop', 'f4', 'dimT')
     varCloudLayers        = tempgrp.createVariable('NcloudLayers', 'f4', 'dimT')
-    varCB_PBL             = tempgrp.createVariable('cloudBasePBL', 'f4', 'dimT')
-    varCT_PBL             = tempgrp.createVariable('cloudTopPBL', 'f4', 'dimT')
     varHsurf              = tempgrp.createVariable('HeightSurface', 'f4', 'dimHsurf')
     varLCL                = tempgrp.createVariable('LCLarray', 'f4', 'dimT')
     varLWP                = tempgrp.createVariable('LWP', 'f4', 'dimT')
@@ -565,11 +538,6 @@ def f_processModelOutput(path_icon, \
     varLTS[:]             = LTS
     varPBLheight[:]       = PBLHeightArrRN
     varPBLheight2[:]      = PBLHeightArrTW
-    varCBheight[:]        = CB_array_ICON
-    varCTheight[:]        = CT_array_ICON
-    varCloudLayers[:]     = NcloudLayers
-    varCB_PBL[:]          = CB_PBL
-    varCT_PBL[:]          = CT_PBL
     varHsurf              = Hsurf
     varLCL[:]             = LCLarray
     varLWP[:]             = LWP
