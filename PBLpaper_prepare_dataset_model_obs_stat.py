@@ -62,7 +62,7 @@ from myFunctions import f_selectingPBLcloudWindow
 
 # ----- user defined parameters for model data reading and processing
 station       = 'joyce'
-debuggingFlag = 1
+debuggingFlag = 0
 verboseFlag   = 1
 reprocICON    = 0        # flag for reprocessing the icon output data
 timeSpinOver  = 0.0      # ending time of the spin up of the model (corresponds to the time at which we start to calculate cloud fraction
@@ -77,7 +77,8 @@ timewindow    = 200      # time window for calculating running mean of variance 
 gradWindThr   = 0.01     # Threshold for wind gradient to determine wind shear presence in the PBLclas
 timeWindowSk  = 33       # number of time stamps corresponding to 5 minutes in the ICON file
 runningWindow = 200*4    # number of time stamps corresponding to 30 minutes running window for the average
-distMinClouds = 50       # minimum height distance between a cloud base and the subsequent one to consider the two cloud bases belonging to the same cloud
+
+
 # ----- creating dictionary of input parameters to process icon lem model output
 modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'QcThresholdVar':QcThreshold, \
                   'QiThresholdVar':QiThreshold, 'SigmaWThresStd':SigmaWThres, 'nTimeMeanVar':nTimeMean, \
@@ -95,8 +96,12 @@ modelInputParameters = {'timeSpinOverVar':timeSpinOver, 'intTimeVar':intTime, 'Q
 #
 #
 # ,'20130424', '20130425', '20130427','20130429','20130501','20130502', '20130518'
-dayList = ['20130518','20130524','20130525','20130527', '20130528']
+#dayList = ['20130414','20130420', \
+# '20130424', '20130425', '20130426','20130427', '20130428', '20130429', '20130430', \
+# '20130501', '20130502', '20130503','20130504','20130505','20130506','20130509', \
+# '20130510', '20130518','20130524', '20130525','20130527','20130528']
 # new days : = ['20130414','20130420', '20130426','20130428', '20130430','20130524','20130525','20130527', '20130528']
+dayList = ['20130414']
 Ndays             = len(dayList)
 
 # dayListAll = ['20130413','20130414','20130417','20130418','20130419','20130420', \
@@ -503,7 +508,6 @@ for iDay in range(Ndays):
                                                       int(mm), \
                                                       QiThreshold, \
                                                       QcThreshold, \
-                                                      distMinClouds, \
                                                       iconLemData, \
                                                       device, \
                                                       verboseFlag, \
@@ -514,7 +518,7 @@ for iDay in range(Ndays):
         print(np.shape(cloudDict_obs['meanheightFromCB']))
 
     print('dimensione time in cloudDict', len(cloudDict_obs['timeSerie']))
-    print('dimensione CB in clouddict', len(cloudDict_obs['cloudBase']))
+    print('dimensione CB in clouddict', len(cloudDict_obs['timeSerie']))
 
     #CloudInfo, time, height, LWP, LWC, Hwind, Wwind, yy, dd, mm, QiThreshold, QcThreshold, iconLemData, device, verboseFlag):
     # iconlem
@@ -543,6 +547,7 @@ for iDay in range(Ndays):
                                                       verboseFlag, \
                                                       debuggingFlag, \
                                                       pathDebugFig)
+
     
 
     # -----------------------------------------------------------------------------------
@@ -736,10 +741,17 @@ for iDay in range(Ndays):
                      cloudDict_obs, \
                      dict_iconlem_variables, \
                      dict_surface_fluxes]
-    fileOutPickle = pathOut+'dataset_PBLcloudPaper_ModObs_'+date+'.p'
-    outfile       = open(fileOutPickle,'wb')
-    pickle.dump(outputArray,clouds_obs, PBLclouds_obs, clouds_iconlem, PBLclouds_iconlem, outfile)
-    outfile.close()
+    fileOutPickle1 = pathOut+'dictionaries_ModObs_'+date+'.p'
+
+    outfile1       = open(fileOutPickle1,'wb')
+    pickle.dump(outputArray, outfile1)
+    outfile1.close()
+
+    clouds_obs.to_netcdf(pathOut+'Clouds_Obs_'+date+'.nc')
+    clouds_iconlem.to_netcdf(pathOut+'Clouds_iconlem_'+date+'.nc')
+    PBLclouds_obs.to_netcdf(pathOut+'PBLClouds_Obs_'+date+'.nc')
+    PBLclouds_iconlem.to_netcdf(pathOut+'PBLClouds_iconlem_'+date+'.nc')
+
     #with open(pathOut+'dataset_PBLcloudPaper_ModObs_'+date+'.p', 'wb') as fp:
     #    pickle.dump(radiosondeList, tower_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
     #import bz2
