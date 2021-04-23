@@ -86,11 +86,13 @@ def f_CCL_new(T, P, RH, height, time, date):
     # step 2: calculating mixing ratio at the surface for T = Td and P=Psurf
     # finding index of height corresponding to lowest level in height
     indHmin = np.nanargmin((height))
+    print(indHmin)
     # reading values of P, T, RH at the corresponding height
     Td_surf = Td[:, indHmin]
     P_surf  = P[:, indHmin]
     RH_surf = RH[:, indHmin]
     m0 = epsilon*E0*np.exp((1./Rv)*(T0**(-1.)-Td_surf**(-1.))) / (P_surf - E0*np.exp((1./Rv)*(T0**(-1.)-Td_surf**(-1.))))
+    print(Td_surf, P_surf, RH_surf, m0)
 
     # step 3: calculating Td(m=m0, P) for every P value
     z_ccl  = np.zeros((dimTime))
@@ -101,14 +103,20 @@ def f_CCL_new(T, P, RH, height, time, date):
         Tdm0_profile = np.zeros((dimHeight))
         Tdm0_profile.fill(np.nan)
         indCCLprofile = []
+        Tm0_surface = 1 / ( (1/T0)  - ( (1/L) * Rv * np.log((m0 * P[:, indHmin])/(E0 * epsilon))))
         for indHeight in range(dimHeight-1):
             Tdm0_profile[indHeight] = 1 / ( (1/T0)  - ( (1/L) * Rv * np.log((m0[indTime] * P[indTime, indHeight])/(E0 * epsilon))))
-            if Tdm0_profile[indHmin] > T[indTime, indHmin]:
-                if (T[indTime, indHeight] < Tdm0_profile[indHeight]) and (T[indTime, indHeight+1] > Tdm0_profile[indHeight]):
-                    indCCLprofile.append(indHeight)
-            else:
-                if (T[indTime, indHeight] > Tdm0_profile[indHeight]) and (T[indTime, indHeight+1] < Tdm0_profile[indHeight]):
-                    indCCLprofile.append(indHeight)
+            #print(T[indTime, indHmin])
+
+            if (T[indTime, indHeight] < Tdm0_profile[indHeight]) and (T[indTime, indHeight+1] > Tdm0_profile[indHeight]):
+                indCCLprofile.append(indHeight)
+                    #print(Tdm0_profile[indHmin])
+                    #print(T[indTime, indHmin])
+          
+        #print(indCCLprofile)
+        #pressure  4858.5156 100738.45
+        #temp 223.94254 284.05402
+        #RH 0.28616378 80.02907
                 ##fig, ax = plt.subplots(figsize=(12, 5))
                 #plt.plot(Tdm0_profile, height, label='TDm0')
                 #plt.plot(T[indTime, :], height, label='T')
@@ -150,7 +158,9 @@ def f_CCL_new(T, P, RH, height, time, date):
     return (DatasetOut)
 
 
-
+#P cosmo  11094.501953125 99559.6015625
+#P icon  4858.5156 100738.45
+#P obs  4858.5156 100738.45
 
 
 # directories where data are stored
@@ -192,7 +202,14 @@ for indFile in range(1):
     RH = ncdata.groups['Temp_data'].variables['RH'][:]
 
     # calling function to calculate CCL height for the day
-    #CCLDataset = f_CCL_new(T, P, RH, height, time, date)
+
+    print(np.shape(P*0.001))
+    CCLDataset = f_CCL_new(T, P*0.001, RH, height, time, date)
+    print(CCLDataset.data_vars['z_ccl'])
+    print('pressure ' , P[0,0], P[0,-1])
+    print('temp', T[0,0], T[0,-1])
+    print('RH', RH[0,0], RH[0,-1])
+    strasuka
 
     # reformatting data to the standard datetime output
     timeStandard = pd.date_range(start=datetime.datetime(yy, mm, dd, 6, 0, 0), \

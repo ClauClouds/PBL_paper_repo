@@ -112,7 +112,8 @@ general information on the content of the extracted pckle file:
 # =============================================================================
 #     dictOut = {'cloudMask':cloudMask, 
                'cloudBase':CB_array,
-               'cloudTop':CT_array, 
+               'cloudTop':CT_array,
+               'timeSerie':time,
                'Ncloudlayers':NcloudLayers,
                'liquidCloudFraction':mean_CF_liquid,
                'iceCloudFraction':mean_CF_ice, 
@@ -268,6 +269,7 @@ cloudThickness_obs              = []
 cloudUpdraftCB_mod              = []
 cloudUpdraftCB_obs              = []
 timeCloudStart_obs              = []
+
 timeCloudEnd_obs                = []
 
 
@@ -1481,22 +1483,6 @@ theta_v_dict_obs_mod_arr = f_calculateMeanThetaVModelProfiles(time_radiosondes, 
 from myFunctions import f_calculateMeanProfilesPlotThetaVRadiosondes
 result = f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, height_mod)
 
-def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
-                                       theta_v_radiosondes,\
-                                       T_radiosondes, \
-                                       rh_radiosObs, \
-                                       height_radiosondes, \
-                                       lcl_radiosondes, \
-                                       lts_radiosondes, \
-                                       pblHeight_radiosondes, \
-                                       theta_v_mod, \
-                                       T_mod, \
-                                       rh_mod, \
-                                       time_mod, \
-                                       height_mod, \
-                                       lcl_mod, \
-                                       lts_mod, \
-                                       pblHeight_mod):
 MatrixHourMeanProfileThetaRad = result[0]
 MatrixHourStdProfileThetaRad  = result[1]
 listHourDict                  = result[2]

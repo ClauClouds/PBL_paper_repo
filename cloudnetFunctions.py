@@ -25,46 +25,56 @@ import atmos
 
 
 def CheckIceLiquidCloudnet(array):
+    """
+
+    ;author: Claudia Acquistapace
+    date of modification: 17/04/2020
+    goal : read cloudnet target classification and convert it to a string for calculating cloud fraction amounts.
+        MODIFICATION: deal with nans
+    :return:
+    """
     
-    
-    dimArr=len(array)           # reading dimension for array in input
-    stringFlag=[]               # generating output string list
+    dimArr     = len(array)           # reading dimension for array in input
+    stringFlag = []                   # generating output string list
     
     for ind in range(dimArr):
         
         # reading the element of the array
-        
-        elem=bin(int(array[ind]))[2:]        # reading the element in binary base 
-        #least significative on the right end of the number and cutting first two characters '0b' 
-        #print array[ind]
-        #print bin(array[ind])[2:]
-        
-        length=len(elem)           # counting number of digits that represent the number
-        
-        # adapting lenght of digits to the maximum lenght possible that can be found in Cloudnet (6 bits) if the length of the string is smaller
-        if length < 6:
-            Nbins2add= 6 - length               # number of zeros to add to the left 
-            elem = '0' * Nbins2add + elem
-            # print 'resized elem'
-            # print elem
-            
-        # flags for bits of cloudnet that are on
-        flagBin0 = int((elem)[-1])      # bit 0: small liquid droplets on
-        flagBin1 = int((elem)[-2])      # bit 1: falling hydrometeors
-        flagBin2 = int((elem)[-3])      # bit 2: wet bulb < 0, if bit 1 on, then phase
-        flagBin3 = int((elem)[-4])      # bit 3: melting ice particles
-        
-        #print flagBin0, flagBin1, flagBin2, flagBin3
-        # condition for only liquid clouds
-        if ((flagBin0 == 1) and (flagBin2 == 0) and (flagBin3 == 0)):
-            stringFlag.append('liquid') # cloud droplets and drizzle, cloud droplets only
-            #print 'sono qui'
-        if ((flagBin1 == 1) and (flagBin2 == 1)): 
-            stringFlag.append('ice')
-        if (flagBin3 == 1):
-            stringFlag.append('ice')
-        if ((flagBin0 == 0) and (flagBin1 == 0) and (flagBin2 == 0) and (flagBin3 == 0)):
+        if np.isnan(array[ind]):
             stringFlag.append('none')
+        else:
+
+            elem = bin(int(array[ind]))[2:]        # reading the element in binary base
+            #least significative on the right end of the number and cutting first two characters '0b'
+            #print array[ind]
+            #print bin(array[ind])[2:]
+
+            length=len(elem)           # counting number of digits that represent the number
+
+            # adapting lenght of digits to the maximum lenght possible that can be found in Cloudnet (6 bits) if the length of the string is smaller
+            if length < 6:
+                Nbins2add = 6 - length               # number of zeros to add to the left
+                elem      = '0' * Nbins2add + elem
+                # print 'resized elem'
+                # print elem
+
+            # flags for bits of cloudnet that are on
+            flagBin0 = int((elem)[-1])      # bit 0: small liquid droplets on
+            flagBin1 = int((elem)[-2])      # bit 1: falling hydrometeors
+            flagBin2 = int((elem)[-3])      # bit 2: wet bulb < 0, if bit 1 on, then phase
+            flagBin3 = int((elem)[-4])      # bit 3: melting ice particles
+
+            #print flagBin0, flagBin1, flagBin2, flagBin3
+            # condition for only liquid clouds
+            if ((flagBin0 == 1) and (flagBin2 == 0) and (flagBin3 == 0)):
+                stringFlag.append('liquid') # cloud droplets and drizzle, cloud droplets only
+                #print 'sono qui'
+            if ((flagBin1 == 1) and (flagBin2 == 1)):
+                stringFlag.append('ice')
+            if (flagBin3 == 1):
+                stringFlag.append('ice')
+            if ((flagBin0 == 0) and (flagBin1 == 0) and (flagBin2 == 0) and (flagBin3 == 0)):
+                stringFlag.append('none')
 
     return(stringFlag)
 
@@ -134,18 +144,22 @@ def f_calculateCloudMaskCloudnet(time, height, cloudnet):
 
 
 def f_calculateCloudFractionCloudnet(cloudnet, yy, mm, dd, time, height):
-    #---------------------------------------------------------------------------------------------------------
-    # date : 11 April 2018 (modified version from the previous code (see above))
-    # author: Claudia Acquistapace
-    # abstract : routine to calculate mean cloud fraction every hour for and mean profile for every six hours of the day for total cloud fraction, ice cloud fraction and liquid cloud fraction. This is done for a specific site and for the whole day. The routine also provides an output dictionary containing the cloud fraction profiles and their standard deviations, for the hourly and six hourly mean and for each phase.
-    # input :
-    #   - date to process
-    #   - site of the measurements
-    #   - path to the data
-    # output:
-    #   - dictionary containing data
-    #   - plots of the daily cloud fractions in the 
-    #---------------------------------------------------------------------------------------------------------
+    """
+    date : 11 April 2018 (modified version from the previous code (see above))
+    author: Claudia Acquistapace
+    abstract : routine to calculate mean cloud fraction every hour for and mean profile for every six hours of the day
+               for total cloud fraction, ice cloud fraction and liquid cloud fraction. This is done for a specific site
+               and for the whole day. The routine also provides an output dictionary containing the cloud fraction
+               profiles and their standard deviations, for the hourly and six hourly mean and for each phase.
+    input :
+      - date to process
+      - site of the measurements
+      - path to the data
+    output:
+      - dictionary containing data
+      - plots of the daily cloud fractions in the
+    """
+
     from cloudnetFunctions import CheckIceLiquidCloudnet
     # building time array for cloud fraction calculation
     deltaT       = datetime.timedelta(minutes=30)

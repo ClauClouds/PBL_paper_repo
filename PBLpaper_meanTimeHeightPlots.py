@@ -285,7 +285,7 @@ fontSizeX     = 10
 fontSizeY     = 10
 # =============================================================================
 #             print('plotting graphs for debugging in debugging mode')         
-fig, ax = plt.subplots(4, 2, figsize=(14,10), sharex=True, sharey=True)
+fig, ax = plt.subplots(4, 2, figsize=(14,10), sharex=True, sharey=True, constrained_layout=True)
 ax1 = plt.subplot(4,2,1) 
 meanSkewW_obs_plot =  np.ma.array(meanSkewW_obs, mask=np.isnan(meanSkewW_obs))
 ax1.spines["top"].set_visible(False)  
@@ -323,8 +323,8 @@ ax2.set_xlim(timeStart, timeEnd)                                 # limits of the
 ax2.set_xlabel("time [hh:mm]", fontsize=fontSizeX)
 ax2.set_ylabel("height [m]", fontsize=fontSizeY)
 cbar = fig.colorbar(cax, orientation='vertical')
-cbar.set_label(label="skewness W",size=16)
-cbar.ax.tick_params(labelsize=14)
+cbar.set_label(label="$skewness_W$",size=16)
+cbar.ax.tick_params(labelsize=12)
 cbar.aspect=80
 #plt.savefig(pathDebugFig+'meridionalWind_iconlem_'+date+'.png', format='png')
 plt.tight_layout()
@@ -364,8 +364,8 @@ ax4.set_xlim(timeStart, timeEnd)                                 # limits of the
 ax4.set_xlabel("time [hh:mm]", fontsize=fontSizeX)
 ax4.set_ylabel("height [m]", fontsize=fontSizeY)
 cbar = fig.colorbar(cax, orientation='vertical')
-cbar.set_label(label="w [$ms^{-1}$]",size=16)
-cbar.ax.tick_params(labelsize=10)
+cbar.set_label(label="$w \ [ms^{-1}$]",size=16)
+cbar.ax.tick_params(labelsize=12)
 cbar.aspect=80
 plt.tight_layout()
 
@@ -405,8 +405,8 @@ ax6.set_xlim(timeStart, timeEnd)                                 # limits of the
 ax6.set_xlabel("time [hh:mm]", fontsize=fontSizeX)
 ax6.set_ylabel("height [m]", fontsize=fontSizeY)
 cbar = fig.colorbar(cax, orientation='vertical')
-cbar.set_label(label=" u wind [$ms^{-1}$]",size=16)
-cbar.ax.tick_params(labelsize=14)
+cbar.set_label(label=" $u \ [ms^{-1}$]",size=16)
+cbar.ax.tick_params(labelsize=12)
 cbar.aspect=80
 plt.tight_layout()
 
@@ -449,17 +449,96 @@ ax8.set_xlim(timeStart, timeEnd)                                 # limits of the
 ax8.set_xlabel("time [hh:mm]", fontsize=fontSizeX)
 ax8.set_ylabel("height [m]", fontsize=fontSizeY)
 cbar = fig.colorbar(cax, orientation='vertical')
-cbar.set_label(label="v wind [$ms^{-1}$]",size=16)
-cbar.ax.tick_params(labelsize=14)
+cbar.set_label(label="$v \ [ms^{-1}$]", size=16)
+cbar.ax.tick_params(labelsize=12)
 cbar.aspect=80
 plt.tight_layout()
 
-
+#fig.subplots_adjust(hspace=0.4, wspace=0.4)
 
 
 plt.savefig('/work/cacquist/HDCP2_S2/statistics/figs/patch003/stat_mean_field_w_skew_Hwind.png')
 # ============================================================================
 #%%
+
+
+
+
+from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
+
+fig, (ax, ax2, cax) = plt.subplots(ncols=3,figsize=(14,3),
+                  gridspec_kw={"width_ratios":[1,1, 0.05]}, )# constrained_layout = true
+fig.subplots_adjust(wspace=0.3)
+ax.spines["top"].set_visible(False)  
+ax.spines["right"].set_visible(False)  
+ax.get_xaxis().tick_bottom()  
+ax.get_yaxis().tick_left()
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
+ax.xaxis_date()
+
+ax2.spines["top"].set_visible(False)  
+ax2.spines["right"].set_visible(False)  
+ax2.get_xaxis().tick_bottom()  
+ax2.get_yaxis().tick_left()
+ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+ax2.xaxis.set_minor_formatter(mdates.DateFormatter("%H:%M"))
+ax2.xaxis_date()
+im  = ax.pcolormesh(timeArr[0], height, vWind_mod_plot.transpose(), vmin=-5., vmax=5., cmap='YlGnBu')
+im2 = ax2.pcolormesh(timeArr[0], height, vWind_obs_plot.transpose(), vmin=-5., vmax=5., cmap='YlGnBu')
+ax.set_ylim(107.,Hmax)                                               # limits of the y-axesn  cmap=plt.cm.get_cmap("viridis", 256)
+ax.set_xlim(timeStart, timeEnd)                                 # limits of the x-axes
+#ax5.set_title("mean meridional wind obs [$ms^{-1}$]", fontsize=16)#
+ax.set_xlabel("time [hh:mm]", fontsize=fontSizeX)
+ax.set_ylabel("height [m]", fontsize=fontSizeY)
+ax2.set_ylim(107.,Hmax)                                               # limits of the y-axesn  cmap=plt.cm.get_cmap("viridis", 256)
+ax2.set_xlim(timeStart, timeEnd)                                 # limits of the x-axes
+#ax5.set_title("mean meridional wind obs [$ms^{-1}$]", fontsize=16)#
+ax2.set_xlabel("time [hh:mm]", fontsize=fontSizeX)
+ax2.set_ylabel("height [m]", fontsize=fontSizeY)
+
+ip = InsetPosition(ax2, [1.05,0,0.05,1]) 
+cax.set_axes_locator(ip)
+
+cbar = fig.colorbar(im, cax=cax, ax=[ax,ax2])
+cbar.set_label(label="$v \ [ms^{-1}$]", size=16)
+cbar.ax.tick_params(labelsize=12)
+cbar.aspect=80
+fig.tight_layout()
+plt.savefig('/work/cacquist/HDCP2_S2/statistics/figs/patch003/stat_mean_field_w_skew_Hwind.png')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # =============================================================================
 #         fig, ax = plt.subplots(figsize=(14,6))
 #         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))

@@ -28,7 +28,14 @@ from myFunctions import f_resamplingfield
 import xlrd
 from matplotlib import pyplot as pl
 #'20130503','20130504', '20130505','20130506','20130509','20130510',
-dateArr = ['20130503']#'20130424', '20130425', '20130427', '20130429','20130501','20130502' ]
+#'20130424', '20130425', '20130427', '20130429','20130501','20130502', '20130503' ]
+
+# new days : 20130414, 20130420, 20130426 20130428 20130430 20130524 20130525 20130527 20130528
+#dateArr          = ['20130414', '20130420', '20130426', '20130428', '20130430', '20130524', '20130525', '20130527', '20130528']
+dateArr          = ['20130414','20130420', \
+ '20130424', '20130425', '20130426','20130427', '20130428', '20130429', '20130430', \
+ '20130501', '20130502', '20130503','20130504','20130505','20130506','20130509', \
+ '20130510', '20130518','20130524', '20130525','20130527','20130528']
 dateTime_fluxes  = [datetime.datetime(2013,1,1,0,0,0) + datetime.timedelta(minutes=30*x) for x in range(0, 17519)]
 filenameList     = ['RU_EC_001_fluxes_2013.xlsx','ME_EC_001_fluxes_2013.xlsx','SE_EC_001_fluxes_2013.xlsx']
 StringStatArr    = ['RU', 'ME', 'SE']
@@ -61,14 +68,66 @@ for indDate in range(len(dateArr)):
         print('processing filename ' +fileName)
         book             = xlrd.open_workbook(path+fileName)
         data_sheet       = book.sheet_by_index(2)
-        
+        data_sheet
         SHF              = data_sheet.col_values(37)
         LHF              = data_sheet.col_values(39)
         SHF_flag         = data_sheet.col_values(43)
         LHF_flag         = data_sheet.col_values(45)
         SHF_relErr       = data_sheet.col_values(54)
         LHF_relErr       = data_sheet.col_values(55)
-        
+        WVdensity        = data_sheet.col_values(10)
+        P                = data_sheet.col_values(11)
+        T                = data_sheet.col_values(9)
+
+
+        # removing first element of the line with the name variable
+        SHF.remove(SHF[0])
+        LHF.remove(LHF[0])
+        SHF_flag.remove(SHF_flag[0])
+        LHF_flag.remove(LHF_flag[0])
+        SHF_relErr.remove(SHF_relErr[0])
+        LHF_relErr.remove(LHF_relErr[0])
+        WVdensity.remove(WVdensity[0])
+        P.remove(P[0])
+        T.remove(T[0])
+
+
+        # converting lists to arrays for algebric operations (RH calculation)
+#        SHF = np.asarray(SHF, dtype=np.float64)
+#        LHF = np.asarray(LHF, dtype=np.float64)
+#        SHF_flag = np.asarray(SHF_flag, dtype=np.float64)
+#        LHF_flag = np.asarray(LHF_flag, dtype=np.float64)
+#        SHF_relErr = np.asarray(SHF_relErr, dtype=np.float64)
+#        LHF_relErr = np.asarray(LHF_relErr, dtype=np.float64)
+        WVdensity = np.asarray(WVdensity, dtype=np.float64)  # [g/m^3]
+        P = np.asarray(P, dtype=np.float64)  # [hpa]
+        T = np.asarray(T, dtype=np.float64)  # [C]
+        T = T + 273.15  # [K]
+
+
+        # calculating relative humidity based on the formula  RH = 100% P a/(ro my Esat(Ta))
+        # with P air pressure, ro air density, my = 622 the mol mass ratio between vapor and Air, Esat(Ta) the vapor
+        # saturation pressure at air temperature Ta
+        my = 0.622
+        T0 = 273.  # [K]
+        Psat0 = 6.11  # [hPa] saturation pressure at T=T0
+        Rd = 287.0  # [J/Kg K]
+        L = 2.50 * 10 ** 6  # [J/Kg]
+        Rv = 461.5  # [J/Kg K]
+        RH = np.zeros((len(T)))
+        RH.fill(np.nan)
+        for indTime in range(len(T)):
+            # print(T[indTime])
+            # print(P[indTime])
+            rho_air = P[indTime] * 100. / (Rd * T[indTime])  # calculation of density of dry air
+            # print(rho_air)
+            Psat = Psat0 * np.exp((L / Rv) * ((1 / T0) - (1 / T[indTime])))
+            # print(Psat)
+            RH[indTime] = (P[indTime] * WVdensity[indTime] * 0.001) / (rho_air * my * Psat)
+            #print(RH)
+
+
+
         # filtering nan values and values flagged by the quality check and calculating absolute error
         Ntime = len(dateTime_fluxes)
         for ind in range(Ntime):
@@ -81,15 +140,20 @@ for indDate in range(len(dateArr)):
             if LHF_flag[ind] == 2:
                 LHF[ind] = np.nan
 
-        Err_LHF          = np.asarray(LHF[1:]) * np.asarray(LHF_relErr[1:])
-        Err_SHF          = np.asarray(SHF[1:]) * np.asarray(SHF_relErr[1:]) 
+
+        Err_LHF          = np.asarray(LHF[:]) * np.asarray(LHF_relErr[:])
+        Err_SHF          = np.asarray(SHF[:]) * np.asarray(SHF_relErr[:])
 
         # selecting only time stamps corresponding to the selected day
-        LHF_dataframe        = pd.Series(LHF[1:], index=dateTime_fluxes)
-        SHF_dataframe        = pd.Series(SHF[1:], index=dateTime_fluxes)
+        LHF_dataframe        = pd.Series(LHF[:], index=dateTime_fluxes)
+        SHF_dataframe        = pd.Series(SHF[:], index=dateTime_fluxes)
         LHF_Err_dataframe    = pd.Series(Err_LHF, index=dateTime_fluxes)
         SHF_Err_dataframe    = pd.Series(Err_SHF, index=dateTime_fluxes)        
-        
+        P_dataframe          = pd.Series(P, index=dateTime_fluxes)
+        T_dataframe          = pd.Series(T, index=dateTime_fluxes)
+        RH_dataframe         = pd.Series(RH, index=dateTime_fluxes)
+
+
         mask_t = (LHF_dataframe.index >= datetimeDay[0]) * (LHF_dataframe.index <= datetimeDay[-1])
         LHF_day = LHF_dataframe[mask_t].values
         LHF_Err_day = LHF_Err_dataframe[mask_t].values
@@ -98,12 +162,25 @@ for indDate in range(len(dateArr)):
         SHF_day = SHF_dataframe[mask_t].values
         SHF_Err_day = SHF_Err_dataframe[mask_t].values
 
-        
+        mask_t = (P_dataframe.index >= datetimeDay[0]) * (P_dataframe.index <= datetimeDay[-1])
+        P_day = P_dataframe[mask_t].values
+
+        mask_t = (T_dataframe.index >= datetimeDay[0]) * (T_dataframe.index <= datetimeDay[-1])
+        T_day = T_dataframe[mask_t].values
+        mask_t = (P_dataframe.index >= datetimeDay[0]) * (P_dataframe.index <= datetimeDay[-1])
+        P_day = P_dataframe[mask_t].values
+        mask_t = (RH_dataframe.index >= datetimeDay[0]) * (RH_dataframe.index <= datetimeDay[-1])
+        RH_day = RH_dataframe[mask_t].values
+
+
         if stringStat == 'RU':
             SHF_RU              = SHF_day
             Err_SHF_RU          = SHF_Err_day
             LHF_RU              = LHF_day
             Err_LHF_RU          = LHF_Err_day
+            P_RU                = P_day
+            T_RU                = T_day
+            RH_RU               = RH_day
             string_RU           = stringStat
     
         if stringStat == 'ME':
@@ -111,6 +188,9 @@ for indDate in range(len(dateArr)):
             Err_SHF_ME          = SHF_Err_day
             LHF_ME              = LHF_day
             Err_LHF_ME          = LHF_Err_day
+            P_ME                = P_day
+            T_ME                = T_day
+            RH_ME               = RH_day
             string_ME           = stringStat
     
         if stringStat == 'SE':
@@ -118,6 +198,9 @@ for indDate in range(len(dateArr)):
             Err_SHF_SE          = SHF_Err_day
             LHF_SE              = LHF_day
             Err_LHF_SE          = LHF_Err_day
+            P_SE                = P_day
+            T_SE                = T_day
+            RH_SE               = RH_day
             string_SE           = stringStat 
             
     
@@ -126,14 +209,18 @@ for indDate in range(len(dateArr)):
     LHF_mean = [] 
     SHF_std  = []
     LHF_std  = []  
-         
+    P_mean   = []
+    T_mean   = []
+    RH_mean  = []
     for indTime in range(len(datetimeDay)):
         SHF_mean.append(np.nanmean([SHF_SE[indTime], SHF_ME[indTime], SHF_RU[indTime]]))
         LHF_mean.append(np.nanmean([LHF_SE[indTime], LHF_ME[indTime], LHF_RU[indTime]]))
         SHF_std.append(np.nanstd([SHF_SE[indTime], SHF_ME[indTime], SHF_RU[indTime]]))
-        LHF_std.append(np.nanstd([LHF_SE[indTime], LHF_ME[indTime], LHF_RU[indTime]]))            
-    
-    
+        LHF_std.append(np.nanstd([LHF_SE[indTime], LHF_ME[indTime], LHF_RU[indTime]]))
+        P_mean.append(np.nanmean([P_SE[indTime], P_ME[indTime], P_RU[indTime]]))
+        T_mean.append(np.nanmean([T_SE[indTime], T_ME[indTime], T_RU[indTime]]))
+        RH_mean.append(np.nanmean([RH_SE[indTime], RH_ME[indTime], RH_RU[indTime]]))
+
 #%%       
     fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(9,8))
     label_size = 16
@@ -223,6 +310,10 @@ for indDate in range(len(dateArr)):
     LHF_MEAN_ncdf     = f.createVariable('LHF_MEAN_ncdf', 'f4','dimT')
     ERR_SHF_MEAN_ncdf = f.createVariable('ERR_SHF_MEAN_ncdf', 'f4','dimT')
     ERR_LHF_MEAN_ncdf = f.createVariable('ERR_LHF_MEAN_ncdf', 'f4','dimT')
+    P_MEAN_ncdf       = f.createVariable('P_MEAN_ncdf', 'f4','dimT')
+    T_MEAN_ncdf       = f.createVariable('T_MEAN_ncdf', 'f4','dimT')
+    RH_MEAN_ncdf       = f.createVariable('RH_MEAN_ncdf', 'f4','dimT')
+
     time_ncdf         = f.createVariable(varname='time', dimensions=('dimT',),datatype='float64')    
    
     # passing data into the variables
@@ -243,12 +334,15 @@ for indDate in range(len(dateArr)):
     ERR_SHF_RU_ncdf[:]   = Err_SHF_RU
     ERR_SHF_ME_ncdf[:]   = Err_SHF_ME
     ERR_SHF_SE_ncdf[:]   = Err_SHF_SE
+    P_MEAN_ncdf[:]       = P_mean
+    T_MEAN_ncdf[:]       = T_mean
+    RH_MEAN_ncdf[:]       = RH_mean
 
     time_ncdf[:]         = nc4.date2num(datetimeDay, units=units, calendar=calendar)
     time_ncdf.units      = units
     
     #Add global attributes
-    f.description        = "surface fluxes extracted from EC stations around joyce"
+    f.description        = "surface fluxes and P, T, RH time series extracted from EC stations around joyce"
     f.history            = "Created by Claudia Acquistapace cacquist@meteo.uni-koeln.de - University of Cologne"
     
     #Add local attributes to variable instances

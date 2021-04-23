@@ -224,6 +224,8 @@ def f_calculateCloudBaseTopThickness(cloudMask, time, height, humanInfo):
 
     # step 3: identify cloud properties of PBL clouds using timeStart, timeEnd, MaxCTheight
     cloudsTimeWindow = clouds.sel(time=slice(timeStart, timeEnd))
+
+    
     PBLclouds = cloudsTimeWindow.where(cloudsTimeWindow.cloudTop < heightPBL)
 
 
@@ -237,7 +239,6 @@ def f_calculateMinCloudBaseTop(clouds, PBLclouds, date_arr):
      input: clouds - list of xarray datasets of cloud properties
             PBLclouds - list of xarray datasets of PBL cloud properties
             date_arr - array of days to be processed
-            dimTime - time array dimension
     output: minimum cloud base and corresponding cloud tops in matrices of dimtime, Nfiles dimensions
     """
     
@@ -247,7 +248,9 @@ def f_calculateMinCloudBaseTop(clouds, PBLclouds, date_arr):
     CBarr_obs = np.zeros((dimTime, Nfiles))
     CTarr_obs = np.zeros((dimTime, Nfiles))
     TKarr_obs = np.zeros((dimTime, Nfiles))
-
+    CBarr_PBL_obs = np.zeros((dimTime, Nfiles))
+    CTarr_PBL_obs = np.zeros((dimTime, Nfiles))
+    TKarr_PBL_obs = np.zeros((dimTime, Nfiles))
     # for each day, reading and saving minimum cloud base and corresponding cloud top
     for indFile in range(Nfiles):
         
@@ -259,42 +262,29 @@ def f_calculateMinCloudBaseTop(clouds, PBLclouds, date_arr):
         timeStandard = pd.date_range(start=datetime.datetime(yy,mm,dd,0,0,0), \
                                     end=datetime.datetime(yy,mm,dd,23,59,59), freq='9s')
         # reading xarray datasets of the day
-        Obs_dataset = PBLclouds[indFile]
-        #cloud_dataset = clouds[indFile]
-        PBLCloudsStandard = Obs_dataset.reindex({'time':timeStandard})
-        meanCB_obs = np.nanmin(PBLCloudsStandard.cloudBase.values, axis=1)
-        meanCT_obs = np.nanmin(PBLCloudsStandard.cloudTop.values, axis=1)
-        meanTK_obs = np.nanmedian(PBLCloudsStandard.cloudThick.values, axis=1)
+        PBLcloud_dataset = PBLclouds[indFile]
+        cloud_dataset = clouds[indFile]
+
+        PBLCloudsStandard = PBLcloud_dataset.reindex({'time':timeStandard})
+        meanCB_obs = np.nanmin(cloud_dataset.cloudBase.values, axis=1)
+        meanCT_obs = np.nanmin(cloud_dataset.cloudTop.values, axis=1)
+        meanTK_obs = np.nanmin(cloud_dataset.cloudThick.values, axis=1)
+
+        meanCB_obs = np.nanmin(cloud_dataset.cloudBase.values, axis=1)
+        meanCT_obs = np.nanmin(cloud_dataset.cloudTop.values, axis=1)
+        meanTK_obs = np.nanmin(cloud_dataset.cloudThick.values, axis=1)
+
+        meanCB_PBL_obs = np.nanmin(PBLCloudsStandard.cloudBase.values, axis=1)
+        meanCT_PBL_obs = np.nanmin(PBLCloudsStandard.cloudTop.values, axis=1)
+        meanTK_PBL_obs = np.nanmin(PBLCloudsStandard.cloudThick.values, axis=1)
+
         CBarr_obs[:, indFile] = meanCB_obs
         CTarr_obs[:, indFile] = meanCT_obs
         TKarr_obs[:, indFile] = meanTK_obs
-        
-        # calculating CB and CT for PBL
-        #iPBL_obs = 0
-        #print(date_arr[indFile])
-        #for itime in range(dimTime):
-            
-
-            # reindexing xarray datasets of the day to the standardized datetime format from 0 to 24 wit
-            # with frequency of 9 seconds
-
-            
-            #cloud_dataset.reindex({'time':timeStandard})
-            #if iPBL_obs < len(Obs_dataset.time.values):
-            #    if cloud_dataset.time.values[itime] == Obs_dataset.time.values[iPBL_obs]:
-            #        CBarr_obs1 = Obs_dataset.cloudBase.values[iPBL_obs, :]
-            #        if CBarr_obs1.size - np.count_nonzero(np.isnan(CBarr_obs1)) != 0:
-            #            meanCB_obs = np.nanmedian(Obs_dataset.cloudBase.values[iPBL_obs, :])
-            #            meanCT_obs = np.nanmedian(Obs_dataset.cloudTop.values[iPBL_obs, :])
-            #            meanTK_obs = np.nanmedian(Obs_dataset.cloudThick.values[iPBL_obs, :])
-            #            CBarr_obs[itime, indFile] = meanCB_obs
-            #            CTarr_obs[itime, indFile] = meanCT_obs
-            #            TKarr_obs[itime, indFile] = meanTK_obs
-            #            #indexLevelMin_obs = np.nanargmin(Obs_dataset.cloudBase.values[iPBL_obs, :])
-                        #CTarr_obs[itime, indFile] = Obs_dataset.cloudTop[iPBL_obs, indexLevelMin_obs]
-            #        iPBL_obs = iPBL_obs + 1
-
-    return (CBarr_obs, CTarr_obs, TKarr_obs)
+        CBarr_PBL_obs[:, indFile] = meanCB_PBL_obs
+        CTarr_PBL_obs[:, indFile] = meanCT_PBL_obs
+        TKarr_PBL_obs[:, indFile] = meanTK_PBL_obs
+    return (CBarr_obs, CTarr_obs, TKarr_obs, CBarr_PBL_obs)
 
 
 
@@ -1162,7 +1152,7 @@ def f_CCL_new(T, P, RH, height, time, date):
     output: T_ccl, z_ccl
 
     """
-    pathFig = '/work/cacquist/HDCP2_S2/statistics/figs/' + patch + '/figures_JAMES/debugging/'
+    #pathFig = '/work/cacquist/HDCP2_S2/statistics/figs/' + patch + '/figures_JAMES/debugging/'
 
     print('calculating CCL height and T_CCL')
     # defining constants
@@ -1189,6 +1179,7 @@ def f_CCL_new(T, P, RH, height, time, date):
     # step 2: calculating mixing ratio at the surface for T = Td and P=Psurf
     # finding index of height corresponding to lowest level in height
     indHmin = np.nanargmin((height))
+
     # reading values of P, T, RH at the corresponding height
     Td_surf = Td[:, indHmin]
     P_surf = P[:, indHmin]
@@ -1196,6 +1187,7 @@ def f_CCL_new(T, P, RH, height, time, date):
     m0 = epsilon * E0 * np.exp((1. / Rv) * (T0 ** (-1.) - Td_surf ** (-1.))) / (
                 P_surf - E0 * np.exp((1. / Rv) * (T0 ** (-1.) - Td_surf ** (-1.))))
 
+    #print(Td_surf, P_surf, RH_surf, m0)
     # step 3: calculating Td(m=m0, P) for every P value
     z_ccl = np.zeros((dimTime))
     T_cclTop = np.zeros((dimTime))
@@ -1205,26 +1197,28 @@ def f_CCL_new(T, P, RH, height, time, date):
         Tdm0_profile = np.zeros((dimHeight))
         Tdm0_profile.fill(np.nan)
         indCCLprofile = []
+        Tm0_surface = 1 / ((1 / T0) - ((1 / L) * Rv * np.log((m0 * P[:, indHmin]) / (E0 * epsilon))))
         for indHeight in range(dimHeight - 1):
             Tdm0_profile[indHeight] = 1 / (
                         (1 / T0) - ((1 / L) * Rv * np.log((m0[indTime] * P[indTime, indHeight]) / (E0 * epsilon))))
-            if Tdm0_profile[indHmin] > T[indTime, indHmin]:
-                if (T[indTime, indHeight] < Tdm0_profile[indHeight]) and (
-                        T[indTime, indHeight + 1] > Tdm0_profile[indHeight]):
-                    indCCLprofile.append(indHeight)
-            else:
-                if (T[indTime, indHeight] > Tdm0_profile[indHeight]) and (
-                        T[indTime, indHeight + 1] < Tdm0_profile[indHeight]):
-                    indCCLprofile.append(indHeight)
-                ##fig, ax = plt.subplots(figsize=(12, 5))
-                # plt.plot(Tdm0_profile, height, label='TDm0')
-                # plt.plot(T[indTime, :], height, label='T')
-                # plt.legend()
-                # plt.plot(time, z_ccl3)
-                # plt.plot(np.repeat(M0[5000],len(height)), height)
-                # plt.ylim(0, 6000)
-                # plt.savefig(pathFig + str(indPlotCount) + 'Tm0_profile_Check.png', format='png')
-                # indPlotCount = indPlotCount +1
+            # print(T[indTime, indHmin])
+
+            if (T[indTime, indHeight] < Tdm0_profile[indHeight]) and (
+                    T[indTime, indHeight + 1] > Tdm0_profile[indHeight]):
+                indCCLprofile.append(indHeight)
+                # print(Tdm0_profile[indHmin])
+                # print(T[indTime, indHmin])
+
+        #print(indCCLprofile)
+            ##fig, ax = plt.subplots(figsize=(12, 5))
+            # plt.plot(Tdm0_profile, height, label='TDm0')
+            # plt.plot(T[indTime, :], height, label='T')
+            # plt.legend()
+            # plt.plot(time, z_ccl3)
+            # plt.plot(np.repeat(M0[5000],len(height)), height)
+            # plt.ylim(0, 6000)
+            # plt.savefig(pathFig + str(indPlotCount) + 'Tm0_profile_Check.png', format='png')
+            # indPlotCount = indPlotCount +1
         # print(len(indCCLprofile))
         if len(indCCLprofile) == 0:
             z_ccl[indTime] = np.nan
@@ -1237,7 +1231,7 @@ def f_CCL_new(T, P, RH, height, time, date):
     # plt.plot(time, z_ccl)
     # plt.ylim(0,6000)
     # plt.savefig(pathFig+date+'_z_ccl_mod.png', format='png')
-
+    print(z_ccl)
     # ---- finding z(CCL) using the dry adiabatic lapse rate
     T_ground_CCL = np.zeros((dimTime))
     for indTime in range(dimTime):
@@ -1251,6 +1245,9 @@ def f_CCL_new(T, P, RH, height, time, date):
     #               'T_dew'   : (('time', 'height'), Td)},
     #    coords={'time'  : time,
     #            'height': height})
+
+    #return (DatasetOut)
+
     DatasetOut = {'time':time,
                   'height':height,
                   'z_ccl':z_ccl,
@@ -1659,7 +1656,7 @@ def f_PBLClass(time,height,gradWindThr,SigmaWThres,ylim, cloudMask, varianceWmat
 # - min_lcl_ldl is an optional logical flag.  If true, the minimum of the
 #   LCL and LDL is returned.
 def lcl(p,T,rh=None,rhl=None,rhs=None,return_ldl=False,return_min_lcl_ldl=False):
-    # function to calculate lcl height providing T in K and P in pascal
+    # function to calculate lcl height providing T in K and P in pascal, RH between 0 and 1.
     import math
     import scipy.special
     import numpy as numpy 
@@ -1969,14 +1966,14 @@ def f_processRadiosondesDay(fileList, yy, mm, dd):
                 if (T[indHeight] < Tdm0_profile[indHeight]) and (
                             T[indHeight + 1] > Tdm0_profile[indHeight]):
                     indCCLprofile.append(indHeight)
-        pathFig = '/work/cacquist/HDCP2_S2/statistics/figs/patch003/figures_JAMES/debugging/radiosondes/'
-        fig, ax = plt.subplots(figsize=(12, 5))
-        plt.plot(Tdm0_profile, height, label='TDm0')
-        plt.plot(T[:], height, label='T')
-        plt.legend()
-        plt.ylim(0, 6000)
-        plt.savefig(pathFig + str(dayFile) + '_' + str(hourFile) +  'radiosonde_Check.png', format='png')
-        print(len(indCCLprofile))
+        #pathFig = '/work/cacquist/HDCP2_S2/statistics/figs/patch003/figures_JAMES/debugging/radiosondes/'
+        #fig, ax = plt.subplots(figsize=(12, 5))
+        #plt.plot(Tdm0_profile, height, label='TDm0')
+        #plt.plot(T[:], height, label='T')
+        #plt.legend()
+        #plt.ylim(0, 6000)
+        #plt.savefig(pathFig + str(dayFile) + '_' + str(hourFile) +  'radiosonde_Check.png', format='png')
+        #print(len(indCCLprofile))
         if len(indCCLprofile) == 0:
             z_ccl = np.nan
             T_cclTop = np.nan
@@ -2184,12 +2181,16 @@ def f_calcThermodynamics(P,Q,T, LTS, time, height, Hsurf, date):
     # calculation of mixing ratio and relative humidity
     T0 = 273.15
     for iTime in range(len(time)):
-        for iHeight in range(len(height)-1):
+        for iHeight in range(len(height)):
             r[iTime,iHeight]  = (Q[iTime, iHeight])/(1-Q[iTime, iHeight])
             rh[iTime,iHeight] = 0.263*P[iTime, iHeight] * \
             Q[iTime, iHeight] * (np.exp( 17.67 * (T[iTime, iHeight]-T0) / (T[iTime, iHeight] - 29.65)))**(-1)
 
-    
+    #print('RH', rh[0,0], rh[0,-1])
+    #print('pressure ' , P[0,0]*0.001, P[0,-1]*0.001)
+    #print('temp', T[0,0], T[0,-1])
+
+
     # calculation of virtual temperature
     for indH in range(len(height)-1, 0, -1):
         tv[:,indH] = T[:,indH]*(1+0.608 * Q[:,indH])
@@ -2200,6 +2201,7 @@ def f_calcThermodynamics(P,Q,T, LTS, time, height, Hsurf, date):
     from myFunctions import f_CCL_new # input variables: T, P, RH, height, time, date
     #(provide temperaturein K,  RH in % ( 70.14), P In Kpa)
     result_ccl = f_CCL_new(T, P*0.001, rh, height, time, date)
+    #print(result_ccl['z_ccl'])
     #    DatasetOut = {'time':time,
     #              'height':height,
     #              'z_ccl':z_ccl,
@@ -2210,7 +2212,7 @@ def f_calcThermodynamics(P,Q,T, LTS, time, height, Hsurf, date):
     
     from myFunctions import lcl # T in K and P in pascal
     indSurf = len(height)-1
-    PSurf    = P[:,indSurf]   # conversion of P from KPa to pa
+    PSurf    = P[:,indSurf]
     TSurf    = T[:,indSurf]         # T in K
     rhSurf   = rh[:,indSurf-1]
     lclArray = []
@@ -2411,7 +2413,7 @@ def f_calculateAllCloudQuantities(CloudInfo, \
         for itime in range(len(time)):
             if iPBL < len(PBLclouds.time.values):
                 if clouds.time.values[itime] == PBLclouds.time.values[iPBL]:
-                    print(iPBL)
+                    #print(iPBL)
                     CBarray = PBLclouds.cloudBase.values[iPBL, :]
                     if CBarray.size - np.count_nonzero(np.isnan(CBarray)) != 0:
                         minCB = np.nanmin(PBLclouds.cloudBase.values[iPBL, :])
@@ -2471,7 +2473,7 @@ def f_calculateAllCloudQuantities(CloudInfo, \
         for itime in range(len(time)):
             if iPBL < len(PBLclouds.time.values):
                 if clouds.time.values[itime] == PBLclouds.time.values[iPBL]:
-                    print(iPBL)
+                    #print(iPBL)
                     CBarray = PBLclouds.cloudBase.values[iPBL, :]
                     if CBarray.size - np.count_nonzero(np.isnan(CBarray)) != 0:
                         minCB = np.nanmin(PBLclouds.cloudBase.values[iPBL, :])
@@ -3243,6 +3245,7 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
                                        time_mod, \
                                        height_mod, \
                                        lcl_mod, \
+                                       ccl_mod,\
                                        lts_mod, \
                                        pblHeight_mod):
 
@@ -3277,6 +3280,7 @@ def f_calculateMeanThetaVModelProfiles(time_radiosondes, \
             rh_mod_day         = rh_mod[indDay][:,:]
             time_day           = time_mod[indDay][:]
             lcl_mod_day        = lcl_mod[indDay][:]
+            ccl_mod_day        = ccl_mod[indDay][:]
             lts_mod_day        = lts_mod[indDay][:]
             pblHeight_mod_day  = pblHeight_mod[indDay][:]
             #lts_mod_day = lts_mod[:]
@@ -3531,10 +3535,10 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
     NgridInterp                   = len(gridHeight)
     MatrixHourMeanProfileThetaRad = np.zeros((NgridInterp, len(listHourDict)))
     MatrixHourStdProfileThetaRad  = np.zeros((NgridInterp, len(listHourDict)))
-    MatrixHourMeanProfileTRad = np.zeros((NgridInterp, len(listHourDict)))
-    MatrixHourStdProfileTRad  = np.zeros((NgridInterp, len(listHourDict)))
-    MatrixHourMeanProfileRHRad = np.zeros((NgridInterp, len(listHourDict)))
-    MatrixHourStdProfileRHRad  = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourMeanProfileTRad     = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourStdProfileTRad      = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourMeanProfileRHRad    = np.zeros((NgridInterp, len(listHourDict)))
+    MatrixHourStdProfileRHRad     = np.zeros((NgridInterp, len(listHourDict)))
     MatrixHourMeanProfileThetaRad.fill(np.nan)
     MatrixHourStdProfileThetaRad.fill(np.nan)
     MatrixHourMeanProfileTRad.fill(np.nan)
@@ -3590,3 +3594,59 @@ def f_calculateMeanProfilesPlotThetaVRadiosondes(theta_v_dict_obs_mod_arr, heigh
     return(MatrixHourMeanProfileThetaRad, MatrixHourStdProfileThetaRad, listHourDict, \
            MatrixHourMeanProfileTRad, MatrixHourStdProfileTRad, MatrixHourMeanProfileRHRad, \
            MatrixHourStdProfileRHRad)
+
+
+def f_calPBLcloudMask(PBLcloud_dataset,time,height):
+    """
+    author: Claudia Acquistapace
+    date : Friday 19 June 2020
+    goal : calculate cloud mask based on cloud base and cloud top time series provided as input. It is assumed that there
+    are 8 levels for cloud base/top identification i.e. np.shape(PBLcloud_dataset) = len(time),8
+    """
+    # defining a new cloud mask based on the PBl cloud bases and tops
+    CB_matrix = PBLcloud_dataset.cloudBase.values
+    CT_matrix = PBLcloud_dataset.cloudTop.values
+    PBLtime   = PBLcloud_dataset.time.values
+
+    PBL_cloudMask = np.zeros((len(time),len(height)))
+    for indTime in range(len(time)):
+        for indLev in range(8):
+            if (~np.isnan(CB_matrix[indTime, indLev])):
+                cb_height = CB_matrix[indTime, indLev]
+                ct_height = CT_matrix[indTime, indLev]
+                ind = (height >= cb_height) * (height <= ct_height)
+                PBL_cloudMask[indTime,ind] = 1
+
+    return(PBL_cloudMask)
+
+
+def f_calculateCloudFractionPBLclouds(PBLcloudmask,time,height,Nmin_string):
+    '''
+    author: Claudia Acquistapace
+    date: friday 19 June 2020
+    goal: calculate cloud fraction from cloud mask over a given amount of minutes Nmin
+    input: PBLcloudmask: cloud mask matrix
+            time: time array corresponding to the cloud mask
+            height: height array corresponding to the cloud mask
+            Nmin: number of minutes over which to calculate the cloud fraction
+    output: CF_dataset = xr.Dataset({'CF': (['time','height'], CF_PBL)},
+                        coords = {'time':datetime_CF,
+                                  'height':height})
+    '''
+    # calculating cloud fraction every 15 minutes
+    cloudMask_DF = pd.DataFrame(PBLcloudmask, index=time, columns=height)
+    datetime_CF = pd.date_range(start=time[0], end=time[-1], freq=Nmin_string+'min')
+    datetime_CF = datetime_CF.to_pydatetime()
+
+    CF_PBL = np.zeros((len(datetime_CF), len(height)))
+    for indTime in range(len(datetime_CF)-1):
+        mask_t = (cloudMask_DF.index > datetime_CF[indTime]) * (cloudMask_DF.index < datetime_CF[indTime+1])
+        Selection_cloudMask = cloudMask_DF[mask_t]
+        for indHeight in range(len(height)):
+            CFArray = Selection_cloudMask.loc[:,Selection_cloudMask.columns[indHeight]]
+            CF_PBL[indTime,indHeight] = len(CFArray[CFArray == 1])/len(CFArray)
+
+    CF_dataset = xr.Dataset({'CF': (['time','height'], CF_PBL)},
+                        coords = {'time':datetime_CF,
+                                  'height':height})
+    return(CF_dataset)

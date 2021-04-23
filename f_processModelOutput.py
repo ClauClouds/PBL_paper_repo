@@ -39,7 +39,7 @@ import netCDF4 as nc4
 import glob
 from netCDF4 import Dataset
 import matplotlib.dates as mdates
-
+import xarray as xr
 from myFunctions import f_closest
 import matplotlib.pyplot as plt
 from myFunctions import f_calcPblHeightRN
@@ -51,6 +51,7 @@ from myFunctions import f_calcCloudBaseTopPBLclouds
 from myFunctions import f_calcPblHeightTW
 from myFunctions import f_cloudmask
 from myFunctions import f_calcWindSpeed_Dir
+from myFunctions import f_calculateCloudBaseTopThickness
 
 
 def f_processModelOutput(path_icon, \
@@ -208,6 +209,25 @@ def f_processModelOutput(path_icon, \
 #                 CB_array_ICON[indT] = height[indCB]                                 # saving cloud base height
 #                 
 # =============================================================================
+    # calculating cloud base , cloud top and cloud thickness for all clouds and for pbl clouds
+    clouds, PBLclouds = f_calculateCloudBaseTopThickness(cloudMask, datetime_ICON, height2, humanInfo)
+    # deriving lowest cloud base and corresponding cloud top for PBL clouds
+    CBarr = np.zeros(dimTime)
+    CBarr.fill(np.nan)
+    CTarr = np.zeros(dimTime)
+    CTarr.fill(np.nan)
+    iPBL = 0
+    for itime in range(dimTime):
+        if iPBL < len(PBLclouds.time.values):
+            if clouds.time.values[itime] == PBLclouds.time.values[iPBL]:
+                CBarray = PBLclouds.cloudBase.values[iPBL, :]
+                if CBarray.size - np.count_nonzero(np.isnan(CBarray)) != 0:
+                    minCB = np.nanmin(PBLclouds.cloudBase.values[iPBL, :])
+                    CBarr[itime] = minCB
+                    indexLevelMin = np.nanargmin(PBLclouds.cloudBase.values[iPBL, :])
+                    CTarr[itime] = PBLclouds.cloudTop[iPBL, indexLevelMin]
+                iPBL = iPBL + 1
+                
     print('cloud base and cloud top for ICON-LEM calculated ')
         
     
@@ -357,6 +377,7 @@ def f_processModelOutput(path_icon, \
     ylim        = np.repeat(3000, dimTime)     # defining array of heights up to which PBL classification is calculated
     gradWindThr = 0.01
     SigmaWThres = 0.2
+
     outputClass = f_PBLClass(datetime_ICON, \
                              height2, \
                              gradWindThr, \
@@ -368,7 +389,7 @@ def f_processModelOutput(path_icon, \
                              stabilityArr, \
                              connection2Surface, \
                              shear_ICON, \
-                             CB_array_ICON)
+                             CBarr)
     PBLclass     = outputClass[0]
     
     if verboseFlag == 1: 
